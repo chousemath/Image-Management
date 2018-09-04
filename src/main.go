@@ -45,11 +45,15 @@ func main() {
 			imgNames = append(imgNames,path + file.Name())
 		}
 		
+		// Image Decode
 		src, err := decode(imgNames[0])
 		if err != nil {
 			log.Fatal(err)
 		}
+		// Resize one image
 		resizeImg := resize.Resize(300, 0, src, resize.Lanczos3)
+
+		// Show one image on the screen
 		w := widget.NewSheet(widget.NewImage(resizeImg, resizeImg.Bounds()))
 		if err := widget.RunWindow(s, w, &widget.RunWindowOptions{
 			NewWindowOptions: screen.NewWindowOptions{
@@ -59,5 +63,6 @@ func main() {
 		}); err != nil {
 			log.Fatal(err)
 		}
+		
 	})
 }
