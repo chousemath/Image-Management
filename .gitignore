@@ -1,2 +1,5 @@
 demo-image/
 pkg/
+bin/
+*.org
+github.com

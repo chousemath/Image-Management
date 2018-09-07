@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/key"
 	// "golang.org/x/exp/shiny/widget"
-	"github.com/nfnt/resize"
+	// "github.com/nfnt/resize"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -61,7 +61,7 @@ func main() {
 			log.Fatal(err)
 		}
 		// Resize one image
-		resizeImg := resize.Resize(300, 0, src, resize.Lanczos3)
+		// resizeImg := resize.Resize(300, 0, src, resize.Lanczos3)
 		
 		// Show one image on the screen
 		// w := widget.NewSheet(widget.NewImage(resizeImg, resizeImg.Bounds()))
