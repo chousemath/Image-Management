@@ -7,11 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"image"
+	"image/draw"
+	// "reflect"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/key"
-	// "golang.org/x/exp/shiny/widget"
 	// "github.com/nfnt/resize"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -26,6 +27,7 @@ const (
 	DirRelease = 2
 )
 
+
 func decode(filename string) (image.Image, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -39,52 +41,67 @@ func decode(filename string) (image.Image, error) {
 	return m, nil
 }
 
+func changeImg(ws *screen.Window, index int, 
+	source *image.RGBA , img []image.Image, point image.Point, buffer *screen.Buffer) int {
+	if index >= len(img) {
+		index = 0
+	} else if index < 0 {
+		index = len(img)-1
+	}
+	draw.Draw(source, img[index].Bounds(), img[index], point, 0)
+	(*ws).Upload((*buffer).Size(), *buffer, img[0].Bounds())
+	(*ws).Publish() 
+
+	return index
+}
+
+func DeleteImg(){
+	
+}
+
 func main() {
 	// var path string
 	// fmt.Println("Input File Path : ")
 	// fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-		path := "../demo-image/"
-		imgFiles, err := ioutil.ReadDir(path)
+		path := "./demo-image/" //Test path directory
+		files, err := ioutil.ReadDir(path)
 		if err != nil {
 			log.Fatal(err)
 		}	
-		imgNames := []string{}
-		for _, file := range imgFiles {
-			imgNames = append(imgNames,path + file.Name())
-		}
-		
-		// Image Decode
-		src, err := decode(imgNames[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Resize one image
-		// resizeImg := resize.Resize(300, 0, src, resize.Lanczos3)
-		
-		// Show one image on the screen
-		// w := widget.NewSheet(widget.NewImage(resizeImg, resizeImg.Bounds()))
-		// if err := widget.RunWindow(s, w, &widget.RunWindowOptions{
-		// 	NewWindowOptions: screen.NewWindowOptions{
-		// 		Width: resizeImg.Bounds().Max.X,
-		// 		Height: resizeImg.Bounds().Max.Y,
-		// 	},
-		// }); err != nil {
-		// 	log.Fatal(err)
-		// }
 
-		// TODO : NEW WINDOW로 변경해서 해보기
-		w, err := s.NewWindow(nil)
+		imgNames := []string{}
+		resizeImg := []image.Image{}
+		for i, file := range files {
+			imgNames = append(imgNames,path + file.Name())
+			src, err := decode(imgNames[i])
+			if err != nil {
+				log.Fatal(err)
+			}
+			// resizeImg = append(resizeImg, resize.Resize(300, 0, src, resize.Lanczos3))	
+			resizeImg = append(resizeImg, src)
+		}
+		
+		ws, err := s.NewWindow(nil)
 		if err != nil {
 			panic(err)
 			return
 		}
-		defer w.Release()
+		defer ws.Release()
+		point := image.Point{400, 200}
+		buffer, err := s.NewBuffer(point)
+		if err != nil {
+			panic(err)
+			return
+		}
+		defer buffer.Release()
+		source := buffer.RGBA()
+		count := 0
+		count = changeImg(&ws, count, source, resizeImg, point, &buffer)
 
-		w.Publish()
 		for {
-			switch e := w.NextEvent().(type){
+			switch e := ws.NextEvent().(type){
 			case lifecycle.Event:
 				if e.To == lifecycle.StageDead{
 					return
@@ -93,13 +110,18 @@ func main() {
 				if e.Direction ==  DirRelease {
 					switch e.Code {
 					case CodeEscape :
+						fmt.Println("CLICK ESC")
 						return
 					case CodeRightArrow :
-						fmt.Println("right")
+						fmt.Println("CLICK RIGHT")
+						count = changeImg(&ws, count+1, source, resizeImg, point, &buffer)
+						fmt.Println("index : ",count)
 					case CodeLeftArrow :
-						fmt.Println("left")
+						fmt.Println("CLICK LEFT")
+						count = changeImg(&ws, count-1, source, resizeImg, point, &buffer)
+						fmt.Println("index : ",count)
 					case CodeDeleteForward :
-						fmt.Println("delete")
+						fmt.Println("CLCK DELETE")
 					}
 				}
 			}
