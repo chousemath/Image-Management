@@ -55,17 +55,22 @@ func changeImg(ws *screen.Window, index int,
 	return index
 }
 
-func deleteImg(img []image.Image, index int) ([]image.Image, error){
-	// deleteImg := img[index]
+func deleteImg(img []image.Image, index int, path string) ([]image.Image, error){
+	result := []image.Image{}
 	if index == len(img)-1{
-		img = img[:index]
+		result = img[:index]
 	} else if index == 0 {
-		img = img[1:]
+		result = img[1:]
 	} else {
-
+		result = append(img[:index], img[index+1:]...)
 	}
-	fmt.Println("삭제 후 길이 : ",len(img))
-	return img,nil
+	
+	err := os.Remove(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return result,nil
 }
 
 func main() {
@@ -122,17 +127,15 @@ func main() {
 						return
 					case CodeRightArrow :
 						count = changeImg(&ws, count+1, source, resizeImg, point, &buffer)
-						fmt.Println("index : ",count)
 					case CodeLeftArrow :
 						count = changeImg(&ws, count-1, source, resizeImg, point, &buffer)
-						fmt.Println("index : ",count)
 					case CodeDeleteForward :
-						resizeImg,err = deleteImg(resizeImg, count)
+						pathName := imgNames[count]
+						resizeImg,err = deleteImg(resizeImg, count, pathName)
 						if err != nil {
 							log.Fatal(err)
 						}
 						count = changeImg(&ws, count, source, resizeImg, point, &buffer)
-						fmt.Println("!!마지막!! resizeImg :",len(resizeImg))
 					}
 				}
 			}

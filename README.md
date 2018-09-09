@@ -1,4 +1,2 @@
-## This is image management program.
-
-## Using golang
+###### TODO : 스크린에 이미지가 제대로 보여지지 않음
 
