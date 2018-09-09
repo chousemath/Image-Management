@@ -55,8 +55,17 @@ func changeImg(ws *screen.Window, index int,
 	return index
 }
 
-func DeleteImg(){
-	
+func deleteImg(img []image.Image, index int) ([]image.Image, error){
+	// deleteImg := img[index]
+	if index == len(img)-1{
+		img = img[:index]
+	} else if index == 0 {
+		img = img[1:]
+	} else {
+
+	}
+	fmt.Println("삭제 후 길이 : ",len(img))
+	return img,nil
 }
 
 func main() {
@@ -110,18 +119,20 @@ func main() {
 				if e.Direction ==  DirRelease {
 					switch e.Code {
 					case CodeEscape :
-						fmt.Println("CLICK ESC")
 						return
 					case CodeRightArrow :
-						fmt.Println("CLICK RIGHT")
 						count = changeImg(&ws, count+1, source, resizeImg, point, &buffer)
 						fmt.Println("index : ",count)
 					case CodeLeftArrow :
-						fmt.Println("CLICK LEFT")
 						count = changeImg(&ws, count-1, source, resizeImg, point, &buffer)
 						fmt.Println("index : ",count)
 					case CodeDeleteForward :
-						fmt.Println("CLCK DELETE")
+						resizeImg,err = deleteImg(resizeImg, count)
+						if err != nil {
+							log.Fatal(err)
+						}
+						count = changeImg(&ws, count, source, resizeImg, point, &buffer)
+						fmt.Println("!!마지막!! resizeImg :",len(resizeImg))
 					}
 				}
 			}
