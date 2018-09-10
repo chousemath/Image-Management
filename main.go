@@ -74,12 +74,12 @@ func deleteImg(img []image.Image, index int, path string) ([]image.Image, error)
 }
 
 func main() {
-	// var path string
-	// fmt.Println("Input File Path : ")
-	// fmt.Scanln(&path)
+	var path string
+	fmt.Println("Input relative path directory : ")
+	fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-		path := "./demo-image/" //Test path directory
+		// path := "./demo-image/" //Test path directory
 		files, err := ioutil.ReadDir(path)
 		if err != nil {
 			log.Fatal(err)
@@ -124,6 +124,7 @@ func main() {
 				if e.Direction ==  DirRelease {
 					switch e.Code {
 					case CodeEscape :
+						fmt.Println("BYE!")
 						return
 					case CodeRightArrow :
 						count = changeImg(&ws, count+1, source, resizeImg, point, &buffer)
@@ -136,6 +137,7 @@ func main() {
 							log.Fatal(err)
 						}
 						count = changeImg(&ws, count, source, resizeImg, point, &buffer)
+						fmt.Println("SUCCESS DELETE")
 					}
 				}
 			}
