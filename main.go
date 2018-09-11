@@ -78,7 +78,7 @@ func deleteImg(img []image.Image, index int, path string) ([]image.Image, error)
 
 func main() {
 	var path string
-	fmt.Println("Input relative path directory : ")
+	fmt.Println("Input path directory : ")
 	fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
@@ -92,7 +92,7 @@ func main() {
 		resizeImg := []image.Image{}
 		var w, h int
 		for i, file := range files {
-			imgNames = append(imgNames,path + file.Name())
+			imgNames = append(imgNames,path + "/"+ file.Name())
 			src, err := decode(imgNames[i])
 			if err != nil {
 				log.Fatal(err)
