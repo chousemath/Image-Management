@@ -8,7 +8,7 @@ import (
 	"log"
 	"image"
 	"image/draw"
-	// "image/color"
+	"image/color"
 	// "reflect"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
@@ -42,16 +42,17 @@ func decode(filename string) (image.Image, error) {
 	return m, nil
 }
 
-func changeImg(ws *screen.Window, index int, 
+func changeImg(ws *screen.Window, index int, maxRect image.Rectangle,
 	source *image.RGBA , img []image.Image, buffer *screen.Buffer) int {
-	point := image.ZP
 	if index >= len(img) {
 		index = 0
 	} else if index < 0 {
 		index = len(img)-1
 	}
-	draw.Draw(source, img[index].Bounds(), img[index], point, 1)
-	(*ws).Upload(image.ZP, *buffer, img[0].Bounds())
+	black := color.RGBA{0, 0, 0, 0}
+	draw.Draw(source, maxRect.Bounds(),&image.Uniform{black}, image.ZP,1)
+	draw.Draw(source, maxRect.Bounds(), img[index], image.ZP, 1)
+	(*ws).Upload(image.ZP, *buffer, maxRect.Bounds())
 	(*ws).Publish() 
 
 	return index
@@ -89,6 +90,7 @@ func main() {
 
 		imgNames := []string{}
 		resizeImg := []image.Image{}
+		var w, h int
 		for i, file := range files {
 			imgNames = append(imgNames,path + file.Name())
 			src, err := decode(imgNames[i])
@@ -96,31 +98,31 @@ func main() {
 				log.Fatal(err)
 			}
 			resizeImg = append(resizeImg, resize.Resize(500, 0, src, resize.Lanczos3))	
-			// resizeImg = append(resizeImg, src)
+			if w < resizeImg[i].Bounds().Max.X {
+				w = resizeImg[i].Bounds().Max.X
+			} 
+			if h < resizeImg[i].Bounds().Max.Y {
+				h = resizeImg[i].Bounds().Max.Y 
+			} 
 		}
-
-		w := resizeImg[0].Bounds().Max.X
-		h := resizeImg[0].Bounds().Max.Y
 		
-		ws, err := s.NewWindow(&screen.NewWindowOptions{
-			Width: w,
-			Height: h,
-		})
+		ws, err := s.NewWindow(nil)
 		if err != nil {
 			panic(err)
 			return
 		}
 		defer ws.Release()
-		point := image.Pt(w,h)
-		buffer, err := s.NewBuffer(point)
+		
+		buffer, err := s.NewBuffer(image.Pt(w,h))
 		if err != nil {
 			panic(err)
 			return
 		}
 		defer buffer.Release()
+		maxRect := image.Rect(0,0,w,h)
 		source := buffer.RGBA()
 		count := 0
-		count = changeImg(&ws, count, source, resizeImg, &buffer)
+		count = changeImg(&ws, count, maxRect, source, resizeImg, &buffer)
 
 		for {
 			switch e := ws.NextEvent().(type){
@@ -136,16 +138,16 @@ func main() {
 						fmt.Println("BYE!")
 						return
 					case CodeRightArrow :
-						count = changeImg(&ws, count+1, source, resizeImg, &buffer)
+						count = changeImg(&ws, count+1,maxRect, source, resizeImg, &buffer)
 					case CodeLeftArrow :
-						count = changeImg(&ws, count-1, source, resizeImg, &buffer)
+						count = changeImg(&ws, count-1,maxRect, source, resizeImg, &buffer)
 					case CodeDeleteForward :
 						pathName := imgNames[count]
 						resizeImg,err = deleteImg(resizeImg, count, pathName)
 						if err != nil {
 							log.Fatal(err)
 						}
-						count = changeImg(&ws, count, source, resizeImg, &buffer)
+						count = changeImg(&ws, count,maxRect, source, resizeImg, &buffer)
 						fmt.Println("SUCCESS DELETE")
 					}
 				}
