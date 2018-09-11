@@ -8,12 +8,13 @@ import (
 	"log"
 	"image"
 	"image/draw"
+	// "image/color"
 	// "reflect"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/key"
-	// "github.com/nfnt/resize"
+	"github.com/nfnt/resize"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -42,14 +43,15 @@ func decode(filename string) (image.Image, error) {
 }
 
 func changeImg(ws *screen.Window, index int, 
-	source *image.RGBA , img []image.Image, point image.Point, buffer *screen.Buffer) int {
+	source *image.RGBA , img []image.Image, buffer *screen.Buffer) int {
+	point := image.ZP
 	if index >= len(img) {
 		index = 0
 	} else if index < 0 {
 		index = len(img)-1
 	}
-	draw.Draw(source, img[index].Bounds(), img[index], point, 0)
-	(*ws).Upload((*buffer).Size(), *buffer, img[0].Bounds())
+	draw.Draw(source, img[index].Bounds(), img[index], point, 1)
+	(*ws).Upload(image.ZP, *buffer, img[0].Bounds())
 	(*ws).Publish() 
 
 	return index
@@ -93,17 +95,23 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			// resizeImg = append(resizeImg, resize.Resize(300, 0, src, resize.Lanczos3))	
-			resizeImg = append(resizeImg, src)
+			resizeImg = append(resizeImg, resize.Resize(500, 0, src, resize.Lanczos3))	
+			// resizeImg = append(resizeImg, src)
 		}
+
+		w := resizeImg[0].Bounds().Max.X
+		h := resizeImg[0].Bounds().Max.Y
 		
-		ws, err := s.NewWindow(nil)
+		ws, err := s.NewWindow(&screen.NewWindowOptions{
+			Width: w,
+			Height: h,
+		})
 		if err != nil {
 			panic(err)
 			return
 		}
 		defer ws.Release()
-		point := image.Point{400, 200}
+		point := image.Pt(w,h)
 		buffer, err := s.NewBuffer(point)
 		if err != nil {
 			panic(err)
@@ -112,7 +120,7 @@ func main() {
 		defer buffer.Release()
 		source := buffer.RGBA()
 		count := 0
-		count = changeImg(&ws, count, source, resizeImg, point, &buffer)
+		count = changeImg(&ws, count, source, resizeImg, &buffer)
 
 		for {
 			switch e := ws.NextEvent().(type){
@@ -124,19 +132,20 @@ func main() {
 				if e.Direction ==  DirRelease {
 					switch e.Code {
 					case CodeEscape :
+						buffer.Release()
 						fmt.Println("BYE!")
 						return
 					case CodeRightArrow :
-						count = changeImg(&ws, count+1, source, resizeImg, point, &buffer)
+						count = changeImg(&ws, count+1, source, resizeImg, &buffer)
 					case CodeLeftArrow :
-						count = changeImg(&ws, count-1, source, resizeImg, point, &buffer)
+						count = changeImg(&ws, count-1, source, resizeImg, &buffer)
 					case CodeDeleteForward :
 						pathName := imgNames[count]
 						resizeImg,err = deleteImg(resizeImg, count, pathName)
 						if err != nil {
 							log.Fatal(err)
 						}
-						count = changeImg(&ws, count, source, resizeImg, point, &buffer)
+						count = changeImg(&ws, count, source, resizeImg, &buffer)
 						fmt.Println("SUCCESS DELETE")
 					}
 				}
