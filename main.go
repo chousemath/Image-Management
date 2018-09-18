@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/draw"
 	"image/color"
+	"regexp"
 	// "reflect"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
@@ -76,24 +77,43 @@ func deleteImg(img []image.Image, index int, path string) ([]image.Image, error)
 	return result,nil
 }
 
+func readFiles(path string)([]string){
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	re := regexp.MustCompile("[.]")
+	imgNames := []string{}
+	childPath := []string{}
+	for _, file := range files {
+		if re.MatchString(file.Name()) {
+			imgNames = append(imgNames,path + "/"+ file.Name())
+			fmt.Println("이미지파일 : ",file.Name())	
+		} else {
+			childPath = append(childPath, file.Name())
+			fmt.Println("하위 디렉토리 : ",file.Name())
+			imgNames = append(imgNames,readFiles(path + "/" + file.Name())...)
+		}
+	}
+	return imgNames
+}
+
 func main() {
-	var path string
-	fmt.Println("Input path directory : ")
-	fmt.Scanln(&path)
+	// var path string
+	// fmt.Println("Input path directory : ")
+	// fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-		// path := "./demo-image/" //Test path directory
-		files, err := ioutil.ReadDir(path)
-		if err != nil {
-			log.Fatal(err)
-		}	
+		path := "./demo-image" //Test path directory	
 
-		imgNames := []string{}
 		resizeImg := []image.Image{}
 		var w, h int
-		for i, file := range files {
-			imgNames = append(imgNames,path + "/"+ file.Name())
-			src, err := decode(imgNames[i])
+		imgNames := readFiles(path)
+		fmt.Println("최종 : ",imgNames)
+
+		for i,imageName := range imgNames {
+			src, err := decode(imageName)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -103,8 +123,9 @@ func main() {
 			} 
 			if h < resizeImg[i].Bounds().Max.Y {
 				h = resizeImg[i].Bounds().Max.Y 
-			} 
+			}
 		}
+ 
 		
 		ws, err := s.NewWindow(nil)
 		if err != nil {
