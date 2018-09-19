@@ -89,10 +89,8 @@ func readFiles(path string)([]string){
 	for _, file := range files {
 		if re.MatchString(file.Name()) {
 			imgNames = append(imgNames,path + "/"+ file.Name())
-			fmt.Println("이미지파일 : ",file.Name())	
 		} else {
 			childPath = append(childPath, file.Name())
-			fmt.Println("하위 디렉토리 : ",file.Name())
 			imgNames = append(imgNames,readFiles(path + "/" + file.Name())...)
 		}
 	}
@@ -100,17 +98,16 @@ func readFiles(path string)([]string){
 }
 
 func main() {
-	// var path string
-	// fmt.Println("Input path directory : ")
-	// fmt.Scanln(&path)
+	var path string
+	fmt.Println("Input path directory : ")
+	fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-		path := "./demo-image" //Test path directory	
 
 		resizeImg := []image.Image{}
 		var w, h int
 		imgNames := readFiles(path)
-		fmt.Println("최종 : ",imgNames)
+		// path := "./demo-image" //Test path directory
 
 		for i,imageName := range imgNames {
 			src, err := decode(imageName)
