@@ -138,7 +138,6 @@ func main() {
 		source := buffer.RGBA()
 		count := 0
 		count = ChangeImage(&ws, count, maxRect, source, resizeImg, &buffer)
-
 		for {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
@@ -147,7 +146,6 @@ func main() {
 				}
 			case key.Event:
 				if e.Direction == key.DirRelease {
-					fmt.Println("e.Code was:", e.Code)
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
@@ -168,6 +166,5 @@ func main() {
 				}
 			}
 		}
-
 	})
 }
