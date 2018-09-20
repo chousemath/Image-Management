@@ -11,16 +11,20 @@ import (
 	"os"
 	"regexp"
 
-	// "reflect"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 
-	"github.com/nfnt/resize"
+	// "github.com/nfnt/resize"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
+)
+
+const(
+	maxWidth = 1920
+	maxHeight = 1080
 )
 
 // DecodeImage decodes a single image by its name
@@ -38,26 +42,45 @@ func DecodeImage(filename string) (image.Image, error) {
 	return m, nil
 }
 
-// ChangeImage progresses the slide show
-func ChangeImage(
-	ws *screen.Window,
-	index int,
-	maxRect image.Rectangle,
-	source *image.RGBA,
-	images []image.Image,
-	buffer *screen.Buffer,
-) int {
-	if index >= len(images) {
-		index = 0
-	} else if index < 0 {
-		index = len(images) - 1
+// ReadFiles recursively searches an entire directory for all the files in that directory
+func ReadFiles(path string) []string {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
 	}
+	re := regexp.MustCompile("[.]")
+	imgNames := []string{}
+	for _, file := range files {
+		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
+		if re.MatchString(file.Name()) {
+			imgNames = append(imgNames, fullPath)
+		} else {
+			imgNames = append(imgNames, ReadFiles(fullPath)...)
+		}
+	}
+	return imgNames
+}
+
+// DrawImage draw a single image on window
+func DrawImage(
+	ws *screen.Window,
+	buffer *screen.Buffer,
+	imgNames []string, 
+	index int){
+	src, err := DecodeImage(imgNames[index])
+	if err != nil {
+		log.Fatal(err)
+	}
+	source := (*buffer).RGBA()
+	// draw background
 	black := color.RGBA{0, 0, 0, 0}
-	draw.Draw(source, maxRect.Bounds(), &image.Uniform{black}, image.ZP, 1)
-	draw.Draw(source, maxRect.Bounds(), images[index], image.ZP, 1)
-	(*ws).Upload(image.ZP, *buffer, maxRect.Bounds())
+	draw.Draw(source, (*buffer).Bounds(), &image.Uniform{black}, image.ZP, 1)
+	// draw data image
+	draw.Draw(source, src.Bounds(), src , image.ZP, 1)
+	// upload image on screen
+	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
-	return index
+
 }
 
 // DeleteImage deletes a single image
@@ -81,23 +104,15 @@ func DeleteImage(images []image.Image, index int, path string) ([]image.Image, e
 	return images, nil
 }
 
-// ReadFiles recursively searches an entire directory for all the files in that directory
-func ReadFiles(path string) []string {
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		log.Fatal(err)
+func CheckOutOfIndex(slice []string, index int) int{
+	switch index {
+	case len(slice):
+		return 0
+	case -1:
+		return len(slice) - 1
+	default:
+		return index
 	}
-	re := regexp.MustCompile("[.]")
-	imgNames := []string{}
-	for _, file := range files {
-		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
-		if re.MatchString(file.Name()) {
-			imgNames = append(imgNames, fullPath)
-		} else {
-			imgNames = append(imgNames, ReadFiles(fullPath)...)
-		}
-	}
-	return imgNames
 }
 
 func main() {
@@ -106,39 +121,23 @@ func main() {
 	fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-		resizeImg := []image.Image{}
-		var w, h int
-		imgNames := ReadFiles(path)
-
-		for i, imageName := range imgNames {
-			src, err := DecodeImage(imageName)
-			if err != nil {
-				log.Fatal(err)
-			}
-			resizeImg = append(resizeImg, resize.Resize(500, 0, src, resize.Lanczos3))
-			if w < resizeImg[i].Bounds().Max.X {
-				w = resizeImg[i].Bounds().Max.X
-			}
-			if h < resizeImg[i].Bounds().Max.Y {
-				h = resizeImg[i].Bounds().Max.Y
-			}
-		}
-
 		ws, err := s.NewWindow(nil)
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Error creating a new window: %v", err))
 		}
 		defer ws.Release()
 
-		buffer, err := s.NewBuffer(image.Pt(w, h))
+		buffer, err := s.NewBuffer(image.Pt(maxWidth, maxHeight))
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Error creating a new buffer: %v", err))
 		}
 		defer buffer.Release()
-		maxRect := image.Rect(0, 0, w, h)
-		source := buffer.RGBA()
-		count := 0
-		count = ChangeImage(&ws, count, maxRect, source, resizeImg, &buffer)
+
+		imgNames := ReadFiles(path)
+		curIndex := 0
+		DrawImage(&ws, &buffer, imgNames, curIndex)
+		
+		// Event Listener
 		for {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
@@ -152,16 +151,13 @@ func main() {
 						buffer.Release()
 						return
 					case key.CodeRightArrow:
-						count = ChangeImage(&ws, count+1, maxRect, source, resizeImg, &buffer)
+						curIndex = CheckOutOfIndex(imgNames, curIndex+1)
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeLeftArrow:
-						count = ChangeImage(&ws, count-1, maxRect, source, resizeImg, &buffer)
+						curIndex = CheckOutOfIndex(imgNames, curIndex-1)
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
-						pathName := imgNames[count]
-						resizeImg, err = DeleteImage(resizeImg, count, pathName)
-						if err != nil {
-							log.Fatal(err)
-						}
-						count = ChangeImage(&ws, count, maxRect, source, resizeImg, &buffer)
+						// TODO : change delete method 
 					}
 				}
 			}
