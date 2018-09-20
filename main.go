@@ -89,13 +89,11 @@ func ReadFiles(path string) []string {
 	}
 	re := regexp.MustCompile("[.]")
 	imgNames := []string{}
-	childPath := []string{}
 	for _, file := range files {
 		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
 		if re.MatchString(file.Name()) {
 			imgNames = append(imgNames, fullPath)
 		} else {
-			childPath = append(childPath, file.Name())
 			imgNames = append(imgNames, ReadFiles(fullPath)...)
 		}
 	}
@@ -152,7 +150,6 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
-						fmt.Println("BYE!")
 						return
 					case key.CodeRightArrow:
 						count = ChangeImage(&ws, count+1, maxRect, source, resizeImg, &buffer)
