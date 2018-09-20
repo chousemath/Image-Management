@@ -2,6 +2,10 @@
 
 > The purpose of this project is to give non-technical users a way to manage directories containing large numbers of image files in a scalable way. The end use-case is for a company to distribute this program on several work stations (each with a copy of the image directory), hire a few part-time workers to sift through all the images using this system, and to label them by hand.
 
+### Visual description of the overall architecture
+
+![architecture](readme_files/image-workbench.jpg)
+
 ### Installing some dependencies
 
 ```bash
