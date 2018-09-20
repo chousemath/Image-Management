@@ -39,19 +39,24 @@ func DecodeImage(filename string) (image.Image, error) {
 }
 
 // ChangeImage progresses the slide show
-func ChangeImage(ws *screen.Window, index int, maxRect image.Rectangle,
-	source *image.RGBA, img []image.Image, buffer *screen.Buffer) int {
-	if index >= len(img) {
+func ChangeImage(
+	ws *screen.Window,
+	index int,
+	maxRect image.Rectangle,
+	source *image.RGBA,
+	images []image.Image,
+	buffer *screen.Buffer,
+) int {
+	if index >= len(images) {
 		index = 0
 	} else if index < 0 {
-		index = len(img) - 1
+		index = len(images) - 1
 	}
 	black := color.RGBA{0, 0, 0, 0}
 	draw.Draw(source, maxRect.Bounds(), &image.Uniform{black}, image.ZP, 1)
-	draw.Draw(source, maxRect.Bounds(), img[index], image.ZP, 1)
+	draw.Draw(source, maxRect.Bounds(), images[index], image.ZP, 1)
 	(*ws).Upload(image.ZP, *buffer, maxRect.Bounds())
 	(*ws).Publish()
-
 	return index
 }
 
@@ -103,11 +108,9 @@ func main() {
 	fmt.Scanln(&path)
 
 	driver.Main(func(s screen.Screen) {
-
 		resizeImg := []image.Image{}
 		var w, h int
 		imgNames := ReadFiles(path)
-		// path := "./demo-image" //Test path directory
 
 		for i, imageName := range imgNames {
 			src, err := DecodeImage(imageName)
