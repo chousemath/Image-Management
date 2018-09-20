@@ -85,3 +85,8 @@ func TestDeleteImage(t *testing.T) {
 		t.Errorf("DeleteImage failed, number of images in slice should be 0, got: %d", len(images))
 	}
 }
+
+func TestReadFiles(t *testing.T) {
+	fmt.Printf("Please write my test, %T", t)
+	// does this function correctly count the number of files (recursive) in a directory
+}
