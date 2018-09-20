@@ -23,19 +23,6 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 )
 
-const (
-	// CodeEscape is the numeric code for the escape key
-	CodeEscape = 41
-	// CodeRightArrow is the numeric code for the right arrow key
-	CodeRightArrow = 79
-	// CodeLeftArrow is the numeric code for the left arrow key
-	CodeLeftArrow = 80
-	// CodeDeleteForward is the numeric code for the delete key
-	CodeDeleteForward = 76
-	// DirRelease needs explanation...
-	DirRelease = 2
-)
-
 // DecodeImage decodes a single image by its name
 func DecodeImage(filename string) (image.Image, error) {
 	f, err := os.Open(filename)
@@ -69,21 +56,24 @@ func ChangeImage(ws *screen.Window, index int, maxRect image.Rectangle,
 }
 
 // DeleteImage deletes a single image
-func DeleteImage(img []image.Image, index int, path string) ([]image.Image, error) {
-	result := []image.Image{}
+func DeleteImage(images []image.Image, index int, path string) ([]image.Image, error) {
+	// this function modifies the images collection in place
 	switch index {
-	case len(img) - 1:
-		result = img[:index]
+	case len(images) - 1:
+		// you have reached the end of the list
+		images = images[:index]
 	case 0:
-		result = img[1:]
+		// you are at the start of the list
+		images = images[1:]
 	default:
-		result = append(img[:index], img[index+1:]...)
+		// you are somewhere between the end and the start of the list
+		images = append(images[:index], images[index+1:]...)
 	}
 	err := os.Remove(path)
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return images, nil
 }
 
 // ReadFiles recursively searches an entire directory for all the files in that directory
@@ -155,24 +145,24 @@ func main() {
 					return
 				}
 			case key.Event:
-				if e.Direction == DirRelease {
+				if e.Direction == key.DirRelease {
+					fmt.Println("e.Code was:", e.Code)
 					switch e.Code {
-					case CodeEscape:
+					case key.CodeEscape:
 						buffer.Release()
 						fmt.Println("BYE!")
 						return
-					case CodeRightArrow:
+					case key.CodeRightArrow:
 						count = ChangeImage(&ws, count+1, maxRect, source, resizeImg, &buffer)
-					case CodeLeftArrow:
+					case key.CodeLeftArrow:
 						count = ChangeImage(&ws, count-1, maxRect, source, resizeImg, &buffer)
-					case CodeDeleteForward:
+					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						pathName := imgNames[count]
 						resizeImg, err = DeleteImage(resizeImg, count, pathName)
 						if err != nil {
 							log.Fatal(err)
 						}
 						count = ChangeImage(&ws, count, maxRect, source, resizeImg, &buffer)
-						fmt.Println("SUCCESS DELETE")
 					}
 				}
 			}
