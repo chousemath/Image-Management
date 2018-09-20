@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -29,7 +28,7 @@ func copy(src, dst string) error {
 		return err
 	}
 	if !sourceFileStat.Mode().IsRegular() {
-		return errors.New(fmt.Sprintf("%s is not a regular file...", src))
+		return fmt.Errorf("%s is not a regular file", src)
 	}
 	source, err := os.Open(src)
 	if err != nil {

@@ -86,11 +86,12 @@ func ReadFiles(path string) []string {
 	imgNames := []string{}
 	childPath := []string{}
 	for _, file := range files {
+		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
 		if re.MatchString(file.Name()) {
-			imgNames = append(imgNames, path+"/"+file.Name())
+			imgNames = append(imgNames, fullPath)
 		} else {
 			childPath = append(childPath, file.Name())
-			imgNames = append(imgNames, ReadFiles(path+"/"+file.Name())...)
+			imgNames = append(imgNames, ReadFiles(fullPath)...)
 		}
 	}
 	return imgNames
