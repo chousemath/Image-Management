@@ -1,6 +1,5 @@
 package main
 
-//golang.org package download cmd command : go get golang.org/..
 import (
 	"fmt"
 	"image"
@@ -15,7 +14,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
-	// "github.com/nfnt/resize"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/key"
@@ -136,7 +134,6 @@ func main() {
 		curIndex := 0
 		DrawImage(&ws, &buffer, imgNames, curIndex)
 		
-		// Event Listener
 		for {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
