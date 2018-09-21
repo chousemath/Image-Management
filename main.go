@@ -83,25 +83,24 @@ func DrawImage(
 
 }
 
-// DeleteImage deletes a single image
-func DeleteImage(images []image.Image, index int, path string) ([]image.Image, error) {
-	// this function modifies the images collection in place
-	switch index {
-	case len(images) - 1:
-		// you have reached the end of the list
-		images = images[:index]
-	case 0:
-		// you are at the start of the list
-		images = images[1:]
-	default:
-		// you are somewhere between the end and the start of the list
-		images = append(images[:index], images[index+1:]...)
-	}
-	err := os.Remove(path)
+// DeleteFile deletes a single file path
+func DeleteFile(imgNames []string, index int) ([]string, error){
+	err := os.Remove(imgNames[index])
 	if err != nil {
 		return nil, err
 	}
-	return images, nil
+	switch index {
+	case len(imgNames) - 1:
+		// you have reached the end of the list
+		imgNames = imgNames[:index]
+	case 0:
+		// you are at the start of the list
+		imgNames = imgNames[1:]
+	default:
+		// you are somewhere between the end and the start of the list
+		imgNames = append(imgNames[:index], imgNames[index+1:]...)
+	}
+	return imgNames, nil
 }
 
 func CheckOutOfIndex(slice []string, index int) int{
@@ -158,6 +157,11 @@ func main() {
 						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						// TODO : change delete method 
+						imgNames, err = DeleteFile(imgNames, curIndex)
+						if err != nil{
+							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
+						}
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					}
 				}
 			}

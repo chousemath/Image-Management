@@ -53,38 +53,38 @@ func TestDecodeImage(t *testing.T) {
 	}
 }
 
-func TestDeleteImage(t *testing.T) {
-	currentWD = getWD()
-	src := fmt.Sprintf("%s/test_data/doge-1.jpg", currentWD)
-	dstDIR := fmt.Sprintf("%s/test_data/images_to_delete", currentWD)
-	dst := fmt.Sprintf("%s/doge-1.jpg", dstDIR)
-	err := copy(src, dst)
-	filesBefore, err := ioutil.ReadDir(dstDIR)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
-	}
-	images := []image.Image{}
-	imgSrc, err := DecodeImage(dst)
-	if err != nil {
-		log.Fatal(err)
-	}
-	images = append(images, resize.Resize(500, 0, imgSrc, resize.Lanczos3))
-	images, err = DeleteImage(images, 0, dst)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to delete image: %v", err))
-	}
-	filesAfter, err := ioutil.ReadDir(dstDIR)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
-	}
-	numFilesAfter := len(filesBefore) - len(filesAfter)
-	if numFilesAfter != 1 {
-		t.Errorf("DeleteImage failed, number of files deleted, got: %d, want: 1", numFilesAfter)
-	}
-	if len(images) != 0 {
-		t.Errorf("DeleteImage failed, number of images in slice should be 0, got: %d", len(images))
-	}
-}
+// func TestDeleteImage(t *testing.T) {
+// 	currentWD = getWD()
+// 	src := fmt.Sprintf("%s/test_data/doge-1.jpg", currentWD)
+// 	dstDIR := fmt.Sprintf("%s/test_data/images_to_delete", currentWD)
+// 	dst := fmt.Sprintf("%s/doge-1.jpg", dstDIR)
+// 	err := copy(src, dst)
+// 	filesBefore, err := ioutil.ReadDir(dstDIR)
+// 	if err != nil {
+// 		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
+// 	}
+// 	images := []image.Image{}
+// 	imgSrc, err := DecodeImage(dst)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	images = append(images, resize.Resize(500, 0, imgSrc, resize.Lanczos3))
+// 	images, err = DeleteImage(images, 0, dst)
+// 	if err != nil {
+// 		log.Fatal(fmt.Sprintf("Failed to delete image: %v", err))
+// 	}
+// 	filesAfter, err := ioutil.ReadDir(dstDIR)
+// 	if err != nil {
+// 		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
+// 	}
+// 	numFilesAfter := len(filesBefore) - len(filesAfter)
+// 	if numFilesAfter != 1 {
+// 		t.Errorf("DeleteImage failed, number of files deleted, got: %d, want: 1", numFilesAfter)
+// 	}
+// 	if len(images) != 0 {
+// 		t.Errorf("DeleteImage failed, number of images in slice should be 0, got: %d", len(images))
+// 	}
+// }
 
 func TestReadFiles(t *testing.T) {
 	fmt.Printf("Please write my test, %T", t)
