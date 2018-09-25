@@ -87,6 +87,10 @@ func DeleteFile(imgNames []string, index int) ([]string, error){
 	if err != nil {
 		return nil, err
 	}
+	if len(imgNames) == 1 {
+		imgNames = []string{}
+		return imgNames, nil
+	}
 	switch index {
 	case len(imgNames) - 1:
 		// you have reached the end of the list
@@ -153,7 +157,6 @@ func main() {
 						curIndex = CheckOutOfIndex(imgNames, curIndex-1)
 						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
-						// TODO : change delete method 
 						imgNames, err = DeleteFile(imgNames, curIndex)
 						if err != nil{
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
