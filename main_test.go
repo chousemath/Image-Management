@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"path/filepath"
 )
 
 var currentWD string
@@ -56,6 +57,9 @@ func TestDeleteFile(t *testing.T){
 	dstDIR := fmt.Sprintf("%s/test_data/images_to_delete", currentWD)
 	dst := fmt.Sprintf("%s/doge-1.jpg",dstDIR)
 	err := copy(src,dst)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Failed copy image: %v",err))
+	}
 	filesBefore, err := ioutil.ReadDir(dstDIR)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Failed to read directory: %v",err))
@@ -87,4 +91,32 @@ func TestDrawImage(t *testing.T){
 }
 
 func TestReadFiles(t *testing.T) {
+	currentWD := getWD()
+	parentWD := fmt.Sprintf("%s/test_data",currentWD)
+	childWD := fmt.Sprintf("%s/child_test_data",parentWD)
+	files, err := ioutil.ReadDir(parentWD)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Failed to read directory: %v",err))
+	}
+	beforeParentFiles := []string{}
+	for _, file := range files {
+		if filepath.Ext(file.Name()) != "" {
+			beforeParentFiles = append(beforeParentFiles,file.Name())
+		} 
+	}
+	files, err = ioutil.ReadDir(childWD)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Failed to read directory: %v",err))
+	}
+	beforeChildFiles := []string{}
+	for _, file := range files {
+		if filepath.Ext(file.Name()) != "" {
+			beforeChildFiles = append(beforeChildFiles,file.Name())
+		} 
+	}
+	total := len(beforeParentFiles) + len(beforeChildFiles)
+	afterFiles := ReadFiles(parentWD)
+	if total != len(afterFiles){
+		log.Fatal(fmt.Sprintf("ReadFiles() is Failed, number of images, got: %d, want: %d",len(afterFiles),total))
+	}
 }
