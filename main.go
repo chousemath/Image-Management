@@ -20,8 +20,8 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 )
 
-const(
-	maxWidth = 1920
+const (
+	maxWidth  = 1920
 	maxHeight = 1080
 )
 
@@ -63,8 +63,8 @@ func ReadFiles(path string) []string {
 func DrawImage(
 	ws *screen.Window,
 	buffer *screen.Buffer,
-	imgNames []string, 
-	index int){
+	imgNames []string,
+	index int) {
 	src, err := DecodeImage(imgNames[index])
 	if err != nil {
 		log.Fatal(err)
@@ -74,7 +74,7 @@ func DrawImage(
 	black := color.RGBA{0, 0, 0, 0}
 	draw.Draw(source, (*buffer).Bounds(), &image.Uniform{black}, image.ZP, 1)
 	// draw data image
-	draw.Draw(source, src.Bounds(), src , image.ZP, 1)
+	draw.Draw(source, src.Bounds(), src, image.ZP, 1)
 	// upload image on screen
 	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
@@ -82,7 +82,7 @@ func DrawImage(
 }
 
 // DeleteFile deletes a single file path
-func DeleteFile(imgNames []string, index int) ([]string, error){
+func DeleteFile(imgNames []string, index int) ([]string, error) {
 	err := os.Remove(imgNames[index])
 	if err != nil {
 		return nil, err
@@ -105,12 +105,13 @@ func DeleteFile(imgNames []string, index int) ([]string, error){
 	return imgNames, nil
 }
 
-func CheckOutOfIndex(slice []string, index int) int{
-	switch index {
-	case len(slice):
+// CheckOutOfIndex checks for index out of bounds errors
+func CheckOutOfIndex(sliceLength int, index int) int {
+	switch {
+	case index >= sliceLength:
 		return 0
-	case -1:
-		return len(slice) - 1
+	case index < 0:
+		return sliceLength - 1
 	default:
 		return index
 	}
@@ -137,7 +138,7 @@ func main() {
 		imgNames := ReadFiles(path)
 		curIndex := 0
 		DrawImage(&ws, &buffer, imgNames, curIndex)
-		
+
 		for {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
@@ -151,18 +152,16 @@ func main() {
 						buffer.Release()
 						return
 					case key.CodeRightArrow:
-						curIndex = CheckOutOfIndex(imgNames, curIndex+1)
-						DrawImage(&ws, &buffer, imgNames, curIndex)
+						curIndex = CheckOutOfIndex(len(imgNames), curIndex+1)
 					case key.CodeLeftArrow:
-						curIndex = CheckOutOfIndex(imgNames, curIndex-1)
-						DrawImage(&ws, &buffer, imgNames, curIndex)
+						curIndex = CheckOutOfIndex(len(imgNames), curIndex-1)
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						imgNames, err = DeleteFile(imgNames, curIndex)
-						if err != nil{
+						if err != nil {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
 						}
-						DrawImage(&ws, &buffer, imgNames, curIndex)
 					}
+					DrawImage(&ws, &buffer, imgNames, curIndex)
 				}
 			}
 		}
