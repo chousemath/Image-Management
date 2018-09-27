@@ -23,3 +23,11 @@ $ go test
 PASS
 ok      github.com/KwakSeungeun/Image-Management        0.045s
 ```
+
+### Next Task
+
+```bash
+$ Add image cropping
+$ Add image brightness/contrast adjustment
+$ Study gRPC (https://grpc.io/)
+```
