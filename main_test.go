@@ -86,10 +86,6 @@ func TestDeleteFile(t *testing.T) {
 	}
 }
 
-func TestDrawImage(t *testing.T) {
-
-}
-
 func TestReadFiles(t *testing.T) {
 	currentWD := getWD()
 	parentWD := fmt.Sprintf("%s/test_data", currentWD)

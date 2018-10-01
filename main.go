@@ -64,10 +64,10 @@ func DrawImage(
 	ws *screen.Window,
 	buffer *screen.Buffer,
 	imgNames []string,
-	index int) {
+	index int) (error){
 	src, err := DecodeImage(imgNames[index])
 	if err != nil {
-		log.Fatal(err)
+		return err;
 	}
 	source := (*buffer).RGBA()
 	// draw background
@@ -78,7 +78,7 @@ func DrawImage(
 	// upload image on screen
 	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
-
+	return nil;
 }
 
 // DeleteFile deletes a single file path
@@ -137,7 +137,10 @@ func main() {
 
 		imgNames := ReadFiles(path)
 		curIndex := 0
-		DrawImage(&ws, &buffer, imgNames, curIndex)
+		err = DrawImage(&ws, &buffer, imgNames, curIndex)
+		if(err!=nil){
+			log.Fatal(err)
+		}
 
 		for {
 			switch e := ws.NextEvent().(type) {
