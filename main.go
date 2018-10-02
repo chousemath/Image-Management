@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"image/jpeg"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,11 +19,15 @@ import (
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
+
+	"github.com/disintegration/imaging"
 )
 
 const (
 	maxWidth  = 1920
 	maxHeight = 1080
+	cropSizeUnit = 100
+	brightUnit = 10	
 )
 
 // DecodeImage decodes a single image by its name
@@ -38,6 +43,16 @@ func DecodeImage(filename string) (image.Image, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func EncodeImage(filename string,src image.Image)(error){
+	f, err := os.Create(filename)
+	if err!=nil{
+		return err
+	}
+	defer f.Close()
+	jpeg.Encode(f, src, nil)
+	return nil	
 }
 
 // ReadFiles recursively searches an entire directory for all the files in that directory
@@ -79,6 +94,15 @@ func DrawImage(
 	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
 	return nil;
+}
+
+func ScaleImage(
+	ws *screen.Window,
+	buffer *screen.Buffer,
+	imgNames []string,
+	src image.Image){
+	
+	// draw.Scale(image.Pt(maxWidth-resizeUnit,maxHeight-resizeUnit),nil,src.Bounds(),src, image.ZP, 1)
 }
 
 // DeleteFile deletes a single file path
@@ -148,6 +172,7 @@ func main() {
 				if e.To == lifecycle.StageDead {
 					return
 				}
+			
 			case key.Event:
 				if e.Direction == key.DirRelease {
 					switch e.Code {
@@ -156,15 +181,36 @@ func main() {
 						return
 					case key.CodeRightArrow:
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex+1)
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeLeftArrow:
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex-1)
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						imgNames, err = DeleteFile(imgNames, curIndex)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
 						}
+						DrawImage(&ws, &buffer, imgNames, curIndex)
+					case key.CodeDownArrow:
+						// Here are crop action codes
+					case key.CodeF12, key.CodeF11:
+						curImage,err := DecodeImage(imgNames[curIndex])
+						if err!=nil{
+							log.Fatal(err)
+						}
+
+						if e.Code == key.CodeF12{
+							curImage = imaging.AdjustBrightness(curImage, brightUnit)
+						}else{
+							curImage = imaging.AdjustBrightness(curImage, (-1)*brightUnit)
+						}
+						
+						err = EncodeImage(imgNames[curIndex], curImage)
+						if (err != nil){
+							log.Fatal(err)
+						}
+						DrawImage(&ws, &buffer, imgNames, curIndex)
 					}
-					DrawImage(&ws, &buffer, imgNames, curIndex)
 				}
 			}
 		}
