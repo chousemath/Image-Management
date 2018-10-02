@@ -13,6 +13,7 @@
 $ go get golang.org/x/exp/shiny/screen &
 $ go get golang.org/x/mobile/event/lifecycle &
 $ go get golang.org/x/mobile/event/key &
+$ go get -u github.com/disintegration/imaging &
 ```
 
 ### Running the unit tests
@@ -30,4 +31,10 @@ ok      github.com/KwakSeungeun/Image-Management        0.045s
 $ Add image cropping
 $ Add image brightness/contrast adjustment
 $ Study gRPC (https://grpc.io/)
+```
+
+### Issue
+
+```
+$ Hard to create button on windows
 ```
