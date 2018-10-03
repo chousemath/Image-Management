@@ -29,12 +29,15 @@ ok      github.com/KwakSeungeun/Image-Management        0.045s
 
 ```bash
 $ Add image cropping
-$ Add image brightness/contrast adjustment
 $ Study gRPC (https://grpc.io/)
 ```
 
 ### Issue
 
 ```
-$ Hard to create button on windows
+$ Hard to create button on windows 
+$ UpArrow key : up brightness
+$ DownArrow key : down brightness
+$ Pageup key : up contrast
+$ PageDown key : down contrast
 ```

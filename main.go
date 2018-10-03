@@ -28,6 +28,7 @@ const (
 	maxHeight = 1080
 	cropSizeUnit = 100
 	brightUnit = 10	
+	contrastUnit = 15
 )
 
 // DecodeImage decodes a single image by its name
@@ -191,23 +192,25 @@ func main() {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
 						}
 						DrawImage(&ws, &buffer, imgNames, curIndex)
-					case key.CodeDownArrow:
-						// Here are crop action codes
-					case key.CodeF12, key.CodeF11:
+					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow:
 						curImage,err := DecodeImage(imgNames[curIndex])
 						if err!=nil{
 							log.Fatal(err)
 						}
 
-						if e.Code == key.CodeF12{
+						if e.Code == key.CodeUpArrow{
 							curImage = imaging.AdjustBrightness(curImage, brightUnit)
-						}else{
+						}else if e.Code == key.CodeDownArrow{
 							curImage = imaging.AdjustBrightness(curImage, (-1)*brightUnit)
+						}else if e.Code == key.CodePageUp{
+							curImage = imaging.AdjustContrast(curImage, contrastUnit)
+						}else if e.Code == key.CodePageDown{
+							curImage = imaging.AdjustContrast(curImage, (-1)*contrastUnit)
 						}
 						
 						err = EncodeImage(imgNames[curIndex], curImage)
 						if (err != nil){
-							log.Fatal(err)
+							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
 						}
 						DrawImage(&ws, &buffer, imgNames, curIndex)
 					}

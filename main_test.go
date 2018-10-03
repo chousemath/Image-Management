@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"image"
+	"image/color"
+	"image/draw"
 	"log"
 	"os"
 	"path/filepath"
@@ -50,6 +53,27 @@ func TestDecodeImage(t *testing.T) {
 		t.Errorf("DecodeImage failed, %v", err)
 	}
 }
+func TestEncodeImage(t *testing.T){
+	currentWD = getWD()
+	imgPath := fmt.Sprintf("%s/test_create_image/rectangle.jpeg", currentWD)
+
+    rectImage := image.NewRGBA(image.Rect(0, 0, 200, 200))
+    green := color.RGBA{0, 100, 0, 255}
+	draw.Draw(rectImage, rectImage.Bounds(), &image.Uniform{green}, image.ZP, draw.Src)
+	
+	err := EncodeImage(imgPath,rectImage)
+	if err != nil{
+		t.Errorf("EncodeImage failed, %v", err)
+	}
+	
+	f, err := ioutil.ReadDir(fmt.Sprintf("%s/test_create_image/",currentWD))
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
+	}
+	if len(f) <= 0 {
+		t.Errorf("EncodeImage failed. got: %d , want: 1",len(f))
+	}
+}
 
 func TestDeleteFile(t *testing.T) {
 	currentWD = getWD()
@@ -65,9 +89,8 @@ func TestDeleteFile(t *testing.T) {
 		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
 	}
 	imgNames := []string{}
-	for i, file := range filesBefore {
+	for _, file := range filesBefore {
 		imgNames = append(imgNames, fmt.Sprintf("%s/%s", dstDIR, file.Name()))
-		fmt.Printf("Before imgNames[%d] : %s\n", i, imgNames[i])
 	}
 	imgNames, err = DeleteFile(imgNames, 0)
 	if err != nil {

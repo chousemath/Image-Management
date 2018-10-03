@@ -2,3 +2,4 @@ pkg/
 bin/
 *.org
 github.com
+test_create_image/*
