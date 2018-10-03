@@ -16,6 +16,12 @@ $ go get golang.org/x/mobile/event/key &
 $ go get -u github.com/disintegration/imaging &
 ```
 
+### Documentation
+
+```bash
+https://godoc.org/github.com/disintegration/imaging
+```
+
 ### Running the unit tests
 
 ```bash
@@ -28,14 +34,10 @@ ok      github.com/KwakSeungeun/Image-Management        0.045s
 ### Next Task
 
 ```bash
-$ Add image cropping
 $ Study gRPC (https://grpc.io/)
 ```
 
-### Issue
-
-```
-$ Hard to create button on windows 
+```bash
 $ UpArrow key : up brightness
 $ DownArrow key : down brightness
 $ Pageup key : up contrast
