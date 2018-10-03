@@ -97,15 +97,6 @@ func DrawImage(
 	return nil;
 }
 
-func ScaleImage(
-	ws *screen.Window,
-	buffer *screen.Buffer,
-	imgNames []string,
-	src image.Image){
-	
-	// draw.Scale(image.Pt(maxWidth-resizeUnit,maxHeight-resizeUnit),nil,src.Bounds(),src, image.ZP, 1)
-}
-
 // DeleteFile deletes a single file path
 func DeleteFile(imgNames []string, index int) ([]string, error) {
 	err := os.Remove(imgNames[index])
@@ -192,12 +183,15 @@ func main() {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
 						}
 						DrawImage(&ws, &buffer, imgNames, curIndex)
+					
+					
+					
+					
 					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow:
 						curImage,err := DecodeImage(imgNames[curIndex])
 						if err!=nil{
 							log.Fatal(err)
 						}
-
 						if e.Code == key.CodeUpArrow{
 							curImage = imaging.AdjustBrightness(curImage, brightUnit)
 						}else if e.Code == key.CodeDownArrow{
@@ -209,9 +203,22 @@ func main() {
 						}
 						
 						err = EncodeImage(imgNames[curIndex], curImage)
-						if (err != nil){
+						if err != nil{
 							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
 						}
+						DrawImage(&ws, &buffer, imgNames, curIndex)
+					case key.CodeS :
+						curImage, err := DecodeImage(imgNames[curIndex])
+						if err != nil{
+							log.Fatal(err)
+						}
+						width := curImage.Bounds().Max.X
+						height := curImage.Bounds().Max.Y
+						curImage = imaging.Crop(curImage,image.Rect(25,25,width-25,height-25))		
+						err = EncodeImage(imgNames[curIndex],curImage)
+						if err != nil{
+							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
+						}			
 						DrawImage(&ws, &buffer, imgNames, curIndex)
 					}
 				}
