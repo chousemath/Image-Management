@@ -1,3 +1,4 @@
+// C:\Users\Kwak\Desktop\Trive\Image-Management\test_data
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"image/draw"
 	"image/jpeg"
 	"io/ioutil"
+	"path/filepath"
 	"log"
 	"os"
 	"regexp"
@@ -30,6 +32,18 @@ const (
 	brightUnit = 10	
 	contrastUnit = 15
 )
+
+var currentWD string
+var imgNames []string
+
+// getWD get current working directory path
+func getWD() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Error getting the working directory: %v", err))
+	}
+	return dir
+}
 
 // DecodeImage decodes a single image by its name
 func DecodeImage(filename string) (image.Image, error) {
@@ -57,34 +71,53 @@ func EncodeImage(filename string,src image.Image)(error){
 }
 
 // ReadFiles recursively searches an entire directory for all the files in that directory
-func ReadFiles(path string) []string {
+func ReadFiles(path string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 	re := regexp.MustCompile("[.]")
-	imgNames := []string{}
 	for _, file := range files {
 		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
 		if re.MatchString(file.Name()) {
 			imgNames = append(imgNames, fullPath)
 		} else {
-			imgNames = append(imgNames, ReadFiles(fullPath)...)
+			ReadFiles(fullPath)
 		}
 	}
-	return imgNames
+}
+
+func GetCopyDir(index int) string {
+	_, fileName := filepath.Split(imgNames[index])
+	copyPath := fmt.Sprintf("%s/copy_data/%s", currentWD, fileName)
+	return copyPath
+}
+
+// CopyImage copy image in working directory
+func CopyImage(index int) error{
+	path := GetCopyDir(index)
+	src, err := DecodeImage(imgNames[index])
+	if err != nil {
+		return err;
+	}
+
+	err = EncodeImage(path, src)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // DrawImage draw a single image on window
 func DrawImage(
 	ws *screen.Window,
 	buffer *screen.Buffer,
-	imgNames []string,
-	index int) (error){
-	src, err := DecodeImage(imgNames[index])
+	path string) (image.Image,error){
+	src, err := DecodeImage(path)
 	if err != nil {
-		return err;
+		return nil,err;
 	}
+	
 	source := (*buffer).RGBA()
 	// draw background
 	black := color.RGBA{0, 0, 0, 0}
@@ -94,18 +127,18 @@ func DrawImage(
 	// upload image on screen
 	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
-	return nil;
+	return src,nil;
 }
 
 // DeleteFile deletes a single file path
-func DeleteFile(imgNames []string, index int) ([]string, error) {
+func DeleteFile(index int) (error) {
 	err := os.Remove(imgNames[index])
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(imgNames) == 1 {
 		imgNames = []string{}
-		return imgNames, nil
+		return nil
 	}
 	switch index {
 	case len(imgNames) - 1:
@@ -118,7 +151,7 @@ func DeleteFile(imgNames []string, index int) ([]string, error) {
 		// you are somewhere between the end and the start of the list
 		imgNames = append(imgNames[:index], imgNames[index+1:]...)
 	}
-	return imgNames, nil
+	return nil
 }
 
 // CheckOutOfIndex checks for index out of bounds errors
@@ -134,6 +167,7 @@ func CheckOutOfIndex(sliceLength int, index int) int {
 }
 
 func main() {
+	currentWD = getWD()
 	var path string
 	fmt.Println("Input path directory : ")
 	fmt.Scanln(&path)
@@ -151,10 +185,13 @@ func main() {
 		}
 		defer buffer.Release()
 
-		imgNames := ReadFiles(path)
+		ReadFiles(path)
 		curIndex := 0
-		err = DrawImage(&ws, &buffer, imgNames, curIndex)
-		if(err!=nil){
+		curDir := GetCopyDir(curIndex)
+		err = CopyImage(curIndex)
+		// Draw Copy Image on window
+		curImage,err := DrawImage(&ws, &buffer, curDir)
+		if err!=nil {
 			log.Fatal(err)
 		}
 
@@ -172,23 +209,36 @@ func main() {
 						buffer.Release()
 						return
 					case key.CodeRightArrow:
+						err = EncodeImage(imgNames[curIndex],curImage)
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex+1)
-						DrawImage(&ws, &buffer, imgNames, curIndex)
+						curDir = GetCopyDir(curIndex)
+						err = CopyImage(curIndex)
+						curImage,err = DrawImage(&ws, &buffer, curDir)
+						if err!=nil {
+							log.Fatal(err)
+						}
 					case key.CodeLeftArrow:
+						err = EncodeImage(imgNames[curIndex],curImage)
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex-1)
-						DrawImage(&ws, &buffer, imgNames, curIndex)
+						curDir = GetCopyDir(curIndex)
+						err = CopyImage(curIndex)
+						curImage,err = DrawImage(&ws, &buffer, curDir)
+						if err!=nil {
+							log.Fatal(err)
+						}
+					// clone을 삭제하고 원본도 삭제하는 방식으로!
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
-						imgNames, err = DeleteFile(imgNames, curIndex)
+						err := DeleteFile(curIndex)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
 						}
-						DrawImage(&ws, &buffer, imgNames, curIndex)
-					
-					
-					
-					
+						curDir = GetCopyDir(curIndex)
+						err = CopyImage(curIndex)
+						curImage,err = DrawImage(&ws, &buffer, curDir)
+						if err!=nil {
+							log.Fatal(err)
+						}
 					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow:
-						curImage,err := DecodeImage(imgNames[curIndex])
 						if err!=nil{
 							log.Fatal(err)
 						}
@@ -201,25 +251,26 @@ func main() {
 						}else if e.Code == key.CodePageDown{
 							curImage = imaging.AdjustContrast(curImage, (-1)*contrastUnit)
 						}
-						
-						err = EncodeImage(imgNames[curIndex], curImage)
-						if err != nil{
-							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
+						err = EncodeImage(curDir,curImage)
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))	
 						}
-						DrawImage(&ws, &buffer, imgNames, curIndex)
-					case key.CodeS :
-						curImage, err := DecodeImage(imgNames[curIndex])
-						if err != nil{
+						curImage,err = DrawImage(&ws, &buffer, curDir)
+						if err!=nil {
 							log.Fatal(err)
 						}
+					case key.CodeS :
 						width := curImage.Bounds().Max.X
 						height := curImage.Bounds().Max.Y
 						curImage = imaging.Crop(curImage,image.Rect(25,25,width-25,height-25))		
-						err = EncodeImage(imgNames[curIndex],curImage)
+						err = EncodeImage(curDir,curImage)
 						if err != nil{
 							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
 						}			
-						DrawImage(&ws, &buffer, imgNames, curIndex)
+						curImage,err = DrawImage(&ws, &buffer, curDir)
+						if err!=nil {
+							log.Fatal(err)
+						}
 					}
 				}
 			}

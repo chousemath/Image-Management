@@ -3,3 +3,5 @@ bin/
 *.org
 github.com
 test_create_image/*
+copy_data/*
+test_data/*
