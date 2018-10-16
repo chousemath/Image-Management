@@ -153,6 +153,14 @@ func DeleteFile(index int) (error) {
 	}
 	return nil
 }
+ 
+func DeleteCopyFile(path string) error {
+	err := os.Remove(path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // CheckOutOfIndex checks for index out of bounds errors
 func CheckOutOfIndex(sliceLength int, index int) int {
@@ -165,6 +173,8 @@ func CheckOutOfIndex(sliceLength int, index int) int {
 		return index
 	}
 }
+
+
 
 func main() {
 	currentWD = getWD()
@@ -231,6 +241,10 @@ func main() {
 						err := DeleteFile(curIndex)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
+						}
+						err = DeleteCopyFile(curDir)
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error deleteing a copy file : %v", err))
 						}
 						curDir = GetCopyDir(curIndex)
 						err = CopyImage(curIndex)
