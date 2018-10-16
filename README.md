@@ -10,6 +10,7 @@
 
 ```bash
 # Some dependencies
+$ go get golang.org/x/exp/shiny/driver &
 $ go get golang.org/x/exp/shiny/screen &
 $ go get golang.org/x/mobile/event/lifecycle &
 $ go get golang.org/x/mobile/event/key &
@@ -42,4 +43,5 @@ $ UpArrow key : up brightness
 $ DownArrow key : down brightness
 $ Pageup key : up contrast
 $ PageDown key : down contrast
+$ 's' key : crop image
 ```
