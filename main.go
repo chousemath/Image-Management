@@ -60,6 +60,7 @@ func DecodeImage(filename string) (image.Image, error) {
 	return m, nil
 }
 
+// EncodeImage encodes a single image by its name
 func EncodeImage(filename string,src image.Image)(error){
 	f, err := os.Create(filename)
 	if err!=nil{
@@ -87,6 +88,7 @@ func ReadFiles(path string) {
 	}
 }
 
+// GetCopyDir returns copy image directory
 func GetCopyDir(index int) string {
 	_, fileName := filepath.Split(imgNames[index])
 	copyPath := fmt.Sprintf("%s/copy_data/%s", currentWD, fileName)
@@ -94,14 +96,13 @@ func GetCopyDir(index int) string {
 }
 
 // CopyImage copy image in working directory
-func CopyImage(index int) error{
-	path := GetCopyDir(index)
-	src, err := DecodeImage(imgNames[index])
+func CopyImage(srcDir string, dstDir string) error{
+	src, err := DecodeImage(srcDir)
 	if err != nil {
-		return err;
+		return err
 	}
 
-	err = EncodeImage(path, src)
+	err = EncodeImage(dstDir, src)
 	if err != nil {
 		return err
 	}
@@ -112,12 +113,8 @@ func CopyImage(index int) error{
 func DrawImage(
 	ws *screen.Window,
 	buffer *screen.Buffer,
-	path string) (image.Image,error){
-	src, err := DecodeImage(path)
-	if err != nil {
-		return nil,err;
-	}
-	
+	path string,
+	src image.Image) (error){	
 	source := (*buffer).RGBA()
 	// draw background
 	black := color.RGBA{0, 0, 0, 0}
@@ -127,39 +124,36 @@ func DrawImage(
 	// upload image on screen
 	(*ws).Upload(image.ZP, *buffer, (*buffer).Bounds())
 	(*ws).Publish()
-	return src,nil;
+	return nil
 }
 
 // DeleteFile deletes a single file path
-func DeleteFile(index int) (error) {
-	err := os.Remove(imgNames[index])
-	if err != nil {
-		return err
-	}
-	if len(imgNames) == 1 {
-		imgNames = []string{}
-		return nil
-	}
-	switch index {
-	case len(imgNames) - 1:
-		// you have reached the end of the list
-		imgNames = imgNames[:index]
-	case 0:
-		// you are at the start of the list
-		imgNames = imgNames[1:]
-	default:
-		// you are somewhere between the end and the start of the list
-		imgNames = append(imgNames[:index], imgNames[index+1:]...)
-	}
-	return nil
-}
- 
-func DeleteCopyFile(path string) error {
+func DeleteFile(path string) (error) {
 	err := os.Remove(path)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// DeleteArrayElement deletes array element by index
+func DeleteArrayElement(arr[] string, index int)([]string){
+	if len(arr) == 1 {
+		arr = []string{}
+		return nil
+	}
+	switch index {
+	case len(arr) - 1:
+		// you have reached the end of the list
+		arr = arr[:index]
+	case 0:
+		// you are at the start of the list
+		arr = arr[1:]
+	default:
+		// you are somewhere between the end and the start of the list
+		arr = append(arr[:index], arr[index+1:]...)
+	}
+	return arr
 }
 
 // CheckOutOfIndex checks for index out of bounds errors
@@ -174,7 +168,17 @@ func CheckOutOfIndex(sliceLength int, index int) int {
 	}
 }
 
-
+func InitCopyData(arr[] string,index int, dir string)(image.Image, error){
+	err := CopyImage(arr[index], dir)
+	if err != nil {
+		return nil, err
+	}
+	curCopyImage,err := DecodeImage(dir)
+	if err != nil {
+		return nil, err
+	}
+	return curCopyImage, nil
+}
 
 func main() {
 	currentWD = getWD()
@@ -197,12 +201,15 @@ func main() {
 
 		ReadFiles(path)
 		curIndex := 0
-		curDir := GetCopyDir(curIndex)
-		err = CopyImage(curIndex)
-		// Draw Copy Image on window
-		curImage,err := DrawImage(&ws, &buffer, curDir)
-		if err!=nil {
+		curCopyDir := GetCopyDir(curIndex)
+		curCopyImage,err := InitCopyData(imgNames, curIndex, curCopyDir)
+		if err!=nil{
 			log.Fatal(err)
+		}
+		// Draw Copy Image on window
+		err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
+		if err!=nil {
+			log.Fatal(fmt.Sprintf("Error draw image : %v", err))
 		}
 
 		for {
@@ -218,74 +225,59 @@ func main() {
 					case key.CodeEscape:
 						buffer.Release()
 						return
-					case key.CodeRightArrow:
-						err = EncodeImage(imgNames[curIndex],curImage)
-						curIndex = CheckOutOfIndex(len(imgNames), curIndex+1)
-						curDir = GetCopyDir(curIndex)
-						err = CopyImage(curIndex)
-						curImage,err = DrawImage(&ws, &buffer, curDir)
-						if err!=nil {
-							log.Fatal(err)
+					case key.CodeRightArrow, key.CodeLeftArrow:
+						// change original image
+						err = EncodeImage(imgNames[curIndex], curCopyImage)
+						if e.Code == key.CodeRightArrow {
+							curIndex++	
+						} else {
+							curIndex--
 						}
-					case key.CodeLeftArrow:
-						err = EncodeImage(imgNames[curIndex],curImage)
-						curIndex = CheckOutOfIndex(len(imgNames), curIndex-1)
-						curDir = GetCopyDir(curIndex)
-						err = CopyImage(curIndex)
-						curImage,err = DrawImage(&ws, &buffer, curDir)
-						if err!=nil {
-							log.Fatal(err)
-						}
-					// clone을 삭제하고 원본도 삭제하는 방식으로!
-					case key.CodeDeleteForward, key.CodeDeleteBackspace:
-						err := DeleteFile(curIndex)
-						if err != nil {
-							log.Fatal(fmt.Sprintf("Error deleteing a file : %v", err))
-						}
-						err = DeleteCopyFile(curDir)
-						if err != nil {
-							log.Fatal(fmt.Sprintf("Error deleteing a copy file : %v", err))
-						}
-						curDir = GetCopyDir(curIndex)
-						err = CopyImage(curIndex)
-						curImage,err = DrawImage(&ws, &buffer, curDir)
-						if err!=nil {
-							log.Fatal(err)
-						}
-					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow:
+						curIndex = CheckOutOfIndex(len(imgNames),curIndex)
+						curCopyImage,err = InitCopyData(imgNames, curIndex, curCopyDir)
 						if err!=nil{
 							log.Fatal(err)
 						}
-						if e.Code == key.CodeUpArrow{
-							curImage = imaging.AdjustBrightness(curImage, brightUnit)
-						}else if e.Code == key.CodeDownArrow{
-							curImage = imaging.AdjustBrightness(curImage, (-1)*brightUnit)
-						}else if e.Code == key.CodePageUp{
-							curImage = imaging.AdjustContrast(curImage, contrastUnit)
-						}else if e.Code == key.CodePageDown{
-							curImage = imaging.AdjustContrast(curImage, (-1)*contrastUnit)
-						}
-						err = EncodeImage(curDir,curImage)
+					case key.CodeDeleteForward, key.CodeDeleteBackspace:
+						// Delete copy data
+						err := DeleteFile(curCopyDir)
 						if err != nil {
-							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))	
+							log.Fatal(fmt.Sprintf("Error deleteing a copy data file : %v", err))
 						}
-						curImage,err = DrawImage(&ws, &buffer, curDir)
-						if err!=nil {
+						// Delete original data
+						err = DeleteFile(imgNames[curIndex])
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error deleteing a original data file : %v", err))
+						}
+						imgNames = DeleteArrayElement(imgNames,curIndex)
+						curCopyImage,err = InitCopyData(imgNames, curIndex, curCopyDir)
+						if err!=nil{
 							log.Fatal(err)
 						}
-					case key.CodeS :
-						width := curImage.Bounds().Max.X
-						height := curImage.Bounds().Max.Y
-						curImage = imaging.Crop(curImage,image.Rect(25,25,width-25,height-25))		
-						err = EncodeImage(curDir,curImage)
-						if err != nil{
-							log.Fatal(fmt.Sprintf("Error encoding a file : %v", err))
-						}			
-						curImage,err = DrawImage(&ws, &buffer, curDir)
-						if err!=nil {
-							log.Fatal(err)
+					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow, key.CodeS:
+						if e.Code == key.CodeUpArrow{
+							curCopyImage = imaging.AdjustBrightness(curCopyImage, brightUnit)
+						}else if e.Code == key.CodeDownArrow{
+							curCopyImage = imaging.AdjustBrightness(curCopyImage, (-1)*brightUnit)
+						}else if e.Code == key.CodePageUp{
+							curCopyImage = imaging.AdjustContrast(curCopyImage, contrastUnit)
+						}else if e.Code == key.CodePageDown{
+							curCopyImage = imaging.AdjustContrast(curCopyImage, (-1)*contrastUnit)
+						}else if e.Code == key.CodeS{
+							width := curCopyImage.Bounds().Max.X
+							height := curCopyImage.Bounds().Max.Y
+							curCopyImage = imaging.Crop(curCopyImage,image.Rect(25,25,width-25,height-25))					
+						}
+						err := EncodeImage(curCopyDir, curCopyImage)
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
 						}
 					}
+				}
+				curCopyDir = GetCopyDir(curIndex)
+				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
+				if err!=nil {
+					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
 				}
 			}
 		}
