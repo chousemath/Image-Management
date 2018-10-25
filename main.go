@@ -212,6 +212,9 @@ func main() {
 			log.Fatal(fmt.Sprintf("Error draw image : %v", err))
 		}
 
+		brightClicks := 0
+		contrastClicks := 0
+
 		for {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
@@ -254,20 +257,51 @@ func main() {
 						if err!=nil{
 							log.Fatal(err)
 						}
-					case key.CodePageUp, key.CodePageDown, key.CodeDownArrow, key.CodeUpArrow, key.CodeS:
+					case key.CodeDownArrow, key.CodeUpArrow:
 						if e.Code == key.CodeUpArrow{
-							curCopyImage = imaging.AdjustBrightness(curCopyImage, brightUnit)
+							brightClicks++
 						}else if e.Code == key.CodeDownArrow{
-							curCopyImage = imaging.AdjustBrightness(curCopyImage, (-1)*brightUnit)
-						}else if e.Code == key.CodePageUp{
-							curCopyImage = imaging.AdjustContrast(curCopyImage, contrastUnit)
-						}else if e.Code == key.CodePageDown{
-							curCopyImage = imaging.AdjustContrast(curCopyImage, (-1)*contrastUnit)
-						}else if e.Code == key.CodeS{
-							width := curCopyImage.Bounds().Max.X
-							height := curCopyImage.Bounds().Max.Y
-							curCopyImage = imaging.Crop(curCopyImage,image.Rect(25,25,width-25,height-25))					
+							brightClicks--
 						}
+						fmt.Println("click : ",brightClicks)
+						if brightClicks < 0 {
+							curCopyImage = imaging.AdjustBrightness(curCopyImage, (-1)*brightUnit)
+						} else if brightClicks > 0 {
+							curCopyImage = imaging.AdjustBrightness(curCopyImage, brightUnit)
+						} else {
+							curCopyImage,err = DecodeImage(imgNames[curIndex])
+							if err != nil {
+								log.Fatal(err)
+							}	
+						}
+						err := EncodeImage(curCopyDir, curCopyImage)
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
+						}
+					case key.CodePageUp, key.CodePageDown:
+						if e.Code == key.CodePageUp{
+							contrastClicks++
+						}else if e.Code == key.CodePageDown{
+							contrastClicks--
+						}
+						if contrastClicks < 0 {
+							curCopyImage = imaging.AdjustContrast(curCopyImage, (-1)*contrastUnit)
+						} else if contrastClicks > 0 {
+							curCopyImage = imaging.AdjustContrast(curCopyImage, contrastUnit)
+						} else {
+							curCopyImage,err = DecodeImage(imgNames[curIndex])
+							if err != nil {
+								log.Fatal(err)
+							}	
+						}
+						err := EncodeImage(curCopyDir, curCopyImage)
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
+						}
+					case  key.CodeS:
+						width := curCopyImage.Bounds().Max.X
+						height := curCopyImage.Bounds().Max.Y
+						curCopyImage = imaging.Crop(curCopyImage,image.Rect(25,25,width-25,height-25))
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
