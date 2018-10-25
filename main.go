@@ -309,6 +309,8 @@ func main() {
 				if err!=nil {
 					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
 				}
+				brightClicks = 0;
+				contrastClicks = 0;
 			}
 		}
 	})
