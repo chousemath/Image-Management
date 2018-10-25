@@ -33,17 +33,7 @@ const (
 	contrastUnit = 15
 )
 
-var currentWD string
 var imgNames []string
-
-// getWD get current working directory path
-func getWD() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Error getting the working directory: %v", err))
-	}
-	return dir
-}
 
 // DecodeImage decodes a single image by its name
 func DecodeImage(filename string) (image.Image, error) {
@@ -91,10 +81,9 @@ func ReadFiles(path string) {
 // GetCopyDir returns copy image directory
 func GetCopyDir(path string) string {
 	_, fileName := filepath.Split(path)
-	copyDir := fmt.Sprintf("%s/copy_data/", currentWD)
-	dstDir := fmt.Sprintf("%s/copy_data/%s", currentWD, fileName)
-	if _, err := os.Stat(copyDir); os.IsNotExist(err) {
-		os.MkdirAll(copyDir, 0755)
+	dstDir := fmt.Sprintf("./copy_data/%s", fileName)
+	if _, err := os.Stat("./copy_data/"); os.IsNotExist(err) {
+		os.MkdirAll("./copy_data/", 0755)
 	}
 	return dstDir
 }
@@ -185,7 +174,6 @@ func InitCopyData(arr[] string,index int, dir string)(image.Image, error){
 }
 
 func main() {
-	currentWD = getWD()
 	var path string
 	fmt.Println("Input path directory : ")
 	fmt.Scanln(&path)
@@ -231,7 +219,7 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
-						err := os.RemoveAll(fmt.Sprintf("%s/copy_data/", currentWD))
+						err := os.RemoveAll("./copy_data/")
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
 						}
