@@ -89,10 +89,14 @@ func ReadFiles(path string) {
 }
 
 // GetCopyDir returns copy image directory
-func GetCopyDir(index int) string {
-	_, fileName := filepath.Split(imgNames[index])
-	copyPath := fmt.Sprintf("%s/copy_data/%s", currentWD, fileName)
-	return copyPath
+func GetCopyDir(path string) string {
+	_, fileName := filepath.Split(path)
+	copyDir := fmt.Sprintf("%s/copy_data/", currentWD)
+	dstDir := fmt.Sprintf("%s/copy_data/%s", currentWD, fileName)
+	if _, err := os.Stat(copyDir); os.IsNotExist(err) {
+		os.MkdirAll(copyDir, 0755)
+	}
+	return dstDir
 }
 
 // CopyImage copy image in working directory
@@ -201,7 +205,7 @@ func main() {
 
 		ReadFiles(path)
 		curIndex := 0
-		curCopyDir := GetCopyDir(curIndex)
+		curCopyDir := GetCopyDir(imgNames[curIndex])
 		curCopyImage,err := InitCopyData(imgNames, curIndex, curCopyDir)
 		if err!=nil{
 			log.Fatal(err)
@@ -227,6 +231,10 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
+						err := os.RemoveAll(fmt.Sprintf("%s/copy_data/", currentWD))
+						if err != nil {
+							log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
+						}
 						return
 					case key.CodeRightArrow, key.CodeLeftArrow:
 						// change original image
@@ -308,7 +316,7 @@ func main() {
 						}
 					}
 				}
-				curCopyDir = GetCopyDir(curIndex)
+				curCopyDir = GetCopyDir(imgNames[curIndex])
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err!=nil {
 					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
