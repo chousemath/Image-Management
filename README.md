@@ -35,10 +35,6 @@ ok      github.com/KwakSeungeun/Image-Management        0.045s
 ### Next Task
 
 ```bash
-$ Study gRPC (https://grpc.io/)
-```
-
-```bash
 $ UpArrow key : up brightness
 $ DownArrow key : down brightness
 $ Pageup key : up contrast

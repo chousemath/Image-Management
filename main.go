@@ -79,11 +79,11 @@ func ReadFiles(path string) {
 }
 
 // GetCopyDir returns copy image directory
-func GetCopyDir(path string) string {
-	_, fileName := filepath.Split(path)
-	dstDir := fmt.Sprintf("./copy_data/%s", fileName)
-	if _, err := os.Stat("./copy_data/"); os.IsNotExist(err) {
-		os.MkdirAll("./copy_data/", 0755)
+func GetCopyDir(src string, dst string) string {
+	_, fileName := filepath.Split(src)
+	dstDir := fmt.Sprintf("%s/%s",dst, fileName)
+	if _, err := os.Stat(dst); os.IsNotExist(err) {
+		os.MkdirAll(dst, 0755)
 	}
 	return dstDir
 }
@@ -193,10 +193,14 @@ func main() {
 
 		ReadFiles(path)
 		curIndex := 0
-		curCopyDir := GetCopyDir(imgNames[curIndex])
+		curCopyDir := GetCopyDir(imgNames[curIndex], "/copy_data")
 		curCopyImage,err := InitCopyData(imgNames, curIndex, curCopyDir)
 		if err!=nil{
 			log.Fatal(err)
+		}
+		newTrashDir := fmt.Sprintf("%s/../trash_data/",path)
+		if _, err := os.Stat(newTrashDir); os.IsNotExist(err) {
+			os.MkdirAll(newTrashDir, 0755)
 		}
 		// Draw Copy Image on window
 		err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
@@ -219,7 +223,7 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
-						err := os.RemoveAll("./copy_data/")
+						err := os.RemoveAll("/copy_data/")
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
 						}
@@ -238,6 +242,11 @@ func main() {
 							log.Fatal(err)
 						}
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
+						trashDataDir := GetCopyDir(imgNames[curIndex],newTrashDir)
+						err = CopyImage(imgNames[curIndex], trashDataDir)
+						if err != nil {
+							log.Fatal(err)
+						}
 						// Delete copy data
 						err := DeleteFile(curCopyDir)
 						if err != nil {
@@ -259,7 +268,6 @@ func main() {
 						}else if e.Code == key.CodeDownArrow{
 							brightClicks--
 						}
-						fmt.Println("click : ",brightClicks)
 						if brightClicks < 0 {
 							curCopyImage = imaging.AdjustBrightness(curCopyImage, (-1)*brightUnit)
 						} else if brightClicks > 0 {
@@ -304,13 +312,13 @@ func main() {
 						}
 					}
 				}
-				curCopyDir = GetCopyDir(imgNames[curIndex])
+				curCopyDir = GetCopyDir(imgNames[curIndex],"/copy_data")
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err!=nil {
 					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
 				}
-				brightClicks = 0;
-				contrastClicks = 0;
+				brightClicks = 0
+				contrastClicks = 0
 			}
 		}
 	})
