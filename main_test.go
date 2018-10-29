@@ -75,39 +75,29 @@ func TestEncodeImage(t *testing.T){
 	}
 }
 
-func TestDeleteFile(t *testing.T) {
-	currentWD = getWD()
-	src := fmt.Sprintf("%s/test_data/doge-1.jpg", currentWD)
-	dstDIR := fmt.Sprintf("%s/test_data/images_to_delete", currentWD)
-	dst := fmt.Sprintf("%s/doge-1.jpg", dstDIR)
-	err := copy(src, dst)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed copy image: %v", err))
+// TO DO
+func TestDleteArrayElement(t *testing.T){
+	testArr := []string{
+		"test1",
+		"test2",
+		"test3",
 	}
-	filesBefore, err := ioutil.ReadDir(dstDIR)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
-	}
-	imgNames := []string{}
-	for _, file := range filesBefore {
-		imgNames = append(imgNames, fmt.Sprintf("%s/%s", dstDIR, file.Name()))
-	}
-	imgNames, err = DeleteFile(imgNames, 0)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to delete directory: %v", err))
-	}
-	filesAfter, err := ioutil.ReadDir(dstDIR)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Failed to read directory: %v", err))
-	}
-	numFilesAfter := len(filesBefore) - len(filesAfter)
-	if numFilesAfter != 1 {
-		t.Errorf("DeleteImage failed, number of files deleted, got: %d, want: 1", numFilesAfter)
-	}
-	if len(imgNames) != 0 {
-		t.Errorf("DeleteImage failed, number of imgNames in slice should be 0, got: %d", len(imgNames))
-	}
+	resultArr := DeleteArrayElement(testArr,1);
+	if len(resultArr)!=2 {
+		t.Errorf("Incorrect index return value, should be 0, got: %d")
+	} 
 }
+
+// TO DO
+func TestCopyData(t *testing.T){
+
+}
+
+// TO DO
+func TestCopyImage(t *testing.T){
+
+}
+
 
 func TestReadFiles(t *testing.T) {
 	currentWD := getWD()

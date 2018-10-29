@@ -193,7 +193,7 @@ func main() {
 
 		ReadFiles(path)
 		curIndex := 0
-		curCopyDir := GetCopyDir(imgNames[curIndex], "/copy_data")
+		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/",path))
 		curCopyImage,err := InitCopyData(imgNames, curIndex, curCopyDir)
 		if err!=nil{
 			log.Fatal(err)
@@ -215,6 +215,10 @@ func main() {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
 				if e.To == lifecycle.StageDead {
+					err = os.RemoveAll(fmt.Sprintf("%s/copy_data/",path))
+					if err != nil {
+						log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
+					}
 					return
 				}
 			
@@ -223,7 +227,7 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
-						err := os.RemoveAll("/copy_data/")
+						err := os.RemoveAll(fmt.Sprintf("%s/copy_data/",path))
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
 						}
@@ -312,7 +316,7 @@ func main() {
 						}
 					}
 				}
-				curCopyDir = GetCopyDir(imgNames[curIndex],"/copy_data")
+				curCopyDir = GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/",path))
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err!=nil {
 					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
