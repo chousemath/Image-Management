@@ -244,7 +244,7 @@ func main() {
 						curIndex = CheckOutOfIndex(len(imgNames),curIndex)
 						curCopyImage,err = InitCopyData(imgNames, curIndex, curCopyDir)
 						if err!=nil{
-							log.Fatal(err)
+							log.Fatal(fmt.Sprintf("Error initialize copy data : %v", err))
 						}
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						trashDataDir := GetCopyDir(imgNames[curIndex],newTrashDir)
