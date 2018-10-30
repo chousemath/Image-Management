@@ -315,10 +315,19 @@ func main() {
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
 						}
-					case key.CodeS:
+					case key.CodeA, key.CodeW, key.CodeD, key.CodeS:
 						width := curCopyImage.Bounds().Max.X
 						height := curCopyImage.Bounds().Max.Y
-						curCopyImage = imaging.Crop(curCopyImage, image.Rect(25, 25, width-25, height-25))
+						if e.Code == key.CodeA {
+							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0, 0, width-25, height))
+						} else if e.Code == key.CodeD {
+							curCopyImage = imaging.Crop(curCopyImage, image.Rect(25, 0, width, height))
+						} else if e.Code == key.CodeW {
+							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0, 0, width, height-25))
+						} else if e.Code == key.CodeS {
+							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0,25, width, height))
+						}
+						
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))

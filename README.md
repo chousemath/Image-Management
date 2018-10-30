@@ -39,5 +39,8 @@ $ UpArrow key : up brightness
 $ DownArrow key : down brightness
 $ 'z' key : up contrast
 $ 'x' key : down contrast
-$ 's' key : crop image
+$ 'a' key : crop right side
+$ 'd' key : crop left side
+$ 'w' key : crop bottom side
+$ 's' key : crop top side
 ```
