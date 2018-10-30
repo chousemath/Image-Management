@@ -194,7 +194,7 @@ func main() {
 
 		ReadFiles(path)
 		curIndex := 0
-		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/",path))
+		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data",path))
 		curCopyImage,err := InitCopyData(imgNames, curIndex, curCopyDir)
 		if err!=nil{
 			log.Fatal(err)
@@ -317,7 +317,7 @@ func main() {
 						}
 					}
 				}
-				curCopyDir = GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/",path))
+				curCopyDir = GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data",path))
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err!=nil {
 					log.Fatal(fmt.Sprintf("Error draw image : %v", err))
