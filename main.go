@@ -62,7 +62,7 @@ func EncodeImage(filename string,src image.Image)(error){
 }
 
 // ReadFiles recursively searches an entire directory for all the files in that directory
-func ReadFiles(path string) {
+func ReadFiles(path string) ([]string){
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
@@ -76,6 +76,7 @@ func ReadFiles(path string) {
 			ReadFiles(fullPath)
 		}
 	}
+	return imgNames
 }
 
 // GetCopyDir returns copy image directory

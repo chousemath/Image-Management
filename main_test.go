@@ -56,6 +56,9 @@ func TestDecodeImage(t *testing.T) {
 func TestEncodeImage(t *testing.T){
 	currentWD = getWD()
 	imgPath := fmt.Sprintf("%s/test_create_image/rectangle.jpeg", currentWD)
+	if _, err := os.Stat(fmt.Sprintf("%s/test_create_image",currentWD)); os.IsNotExist(err) {
+		os.MkdirAll(fmt.Sprintf("%s/test_create_image",currentWD), 0755)
+	}
 
     rectImage := image.NewRGBA(image.Rect(0, 0, 200, 200))
     green := color.RGBA{0, 100, 0, 255}
@@ -73,31 +76,31 @@ func TestEncodeImage(t *testing.T){
 	if len(f) <= 0 {
 		t.Errorf("EncodeImage failed. got: %d , want: 1",len(f))
 	}
+	err = os.RemoveAll(fmt.Sprintf("%s/test_create_image",currentWD))
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
+	}
 }
 
-// TO DO
-func TestDleteArrayElement(t *testing.T){
+func TestDeleteArrayElement(t *testing.T){
 	testArr := []string{
 		"test1",
 		"test2",
 		"test3",
 	}
-	resultArr := DeleteArrayElement(testArr,1);
-	if len(resultArr)!=2 {
-		t.Errorf("Incorrect index return value, should be 0, got: %d")
+	resultArr1 := DeleteArrayElement(testArr,1);
+	if len(resultArr1)!=2 {
+		t.Errorf("Error deleting last element in array,\nWanted : [test1 test3] , Current : %v",resultArr1)
 	} 
+	resultArr2 := DeleteArrayElement(testArr,2);
+	if len(resultArr2)!= 2 {
+		t.Errorf("Error deleting last element in array,\nWanted : [test1 test2] , Current : %v",resultArr2)
+	} 
+	resultArr3 := DeleteArrayElement(testArr,0);
+	if len(resultArr3)!= 2 {
+		t.Errorf("Error deleting first element in array,\nWanted : [test2 test3] , Current : %v",resultArr3)
+	}
 }
-
-// TO DO
-func TestCopyData(t *testing.T){
-
-}
-
-// TO DO
-func TestCopyImage(t *testing.T){
-
-}
-
 
 func TestReadFiles(t *testing.T) {
 	currentWD := getWD()
