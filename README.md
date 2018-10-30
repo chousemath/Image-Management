@@ -37,7 +37,7 @@ ok      github.com/KwakSeungeun/Image-Management        0.045s
 ```bash
 $ UpArrow key : up brightness
 $ DownArrow key : down brightness
-$ Pageup key : up contrast
-$ PageDown key : down contrast
+$ 'z' key : up contrast
+$ 'x' key : down contrast
 $ 's' key : crop image
 ```
