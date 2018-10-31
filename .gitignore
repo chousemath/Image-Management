@@ -6,3 +6,4 @@ test_create_image/*
 copy_data/*
 test_data/*
 trash_data/*
+*.json

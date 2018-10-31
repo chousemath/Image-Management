@@ -88,7 +88,7 @@ func GetCopyDir(src string, dst string) string {
 
 // CopyImage copy image in working directory
 func CopyImage(srcDir string, dstDir string, copyPath string) error {
-	if _, err := os.Stat(copyPath); os.IsNotExist(err){
+	if _, err := os.Stat(copyPath); os.IsNotExist(err) {
 		os.MkdirAll(copyPath, 0755)
 	}
 
@@ -165,11 +165,11 @@ func CheckOutOfIndex(sliceLength int, index int) int {
 
 // InitCopyData xxxxx
 func InitCopyData(arr []string, index int, dir string, copyPath string) (image.Image, error) {
-	err := os.RemoveAll(fmt.Sprintf("%s/.",copyPath))
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
-	}
-	err = CopyImage(arr[index], dir, copyPath)
+	// err := os.RemoveAll(fmt.Sprintf("%s/.",copyPath))
+	// if err != nil {
+	// 	log.Fatal(fmt.Sprintf("Error delete copy data : %v", err))
+	// }
+	err := CopyImage(arr[index], dir, copyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func main() {
 		ReadFiles(path)
 		curIndex := 0
 		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data", path))
-		curCopyImage, err := InitCopyData(imgNames, curIndex, curCopyDir,fmt.Sprintf("%s/copy_data", path))
+		curCopyImage, err := InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", path))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -248,14 +248,18 @@ func main() {
 							curIndex--
 						}
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex)
+						err = os.Remove(curCopyDir)
+						if err != nil {
+							log.Fatal(err)
+						}
 						curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/", path))
-						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir,fmt.Sprintf("%s/copy_data", path))
+						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", path))
 						if err != nil {
 							log.Fatal(err)
 						}
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						trashDataDir := GetCopyDir(imgNames[curIndex], newTrashDir)
-						err = CopyImage(imgNames[curIndex], trashDataDir,fmt.Sprintf("%s/copy_data/", path))
+						err = CopyImage(imgNames[curIndex], trashDataDir, fmt.Sprintf("%s/copy_data/", path))
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -271,7 +275,7 @@ func main() {
 						}
 						imgNames = DeleteArrayElement(imgNames, curIndex)
 						curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data/", path))
-						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir,fmt.Sprintf("%s/copy_data", path))
+						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", path))
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -325,9 +329,9 @@ func main() {
 						} else if e.Code == key.CodeW {
 							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0, 0, width, height-25))
 						} else if e.Code == key.CodeS {
-							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0,25, width, height))
+							curCopyImage = imaging.Crop(curCopyImage, image.Rect(0, 25, width, height))
 						}
-						
+
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
 							log.Fatal(fmt.Sprintf("Error encode changed image : %v", err))
