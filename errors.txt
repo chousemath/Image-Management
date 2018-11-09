@@ -10,3 +10,5 @@ invalid JPEG format: short Huffman data
 [InitCopyData2]<1541730609>: image: unknown format
 [InitCopyData2]<1541730656>: image: unknown format
 [InitCopyData2]<1541732566>: invalid JPEG format: short Huffman data
+[InitCopyData1]<1541741475>: image: unknown format
+[InitCopyData3]<1541742547>: invalid JPEG format: short Huffman data

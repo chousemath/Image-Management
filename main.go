@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"time"
@@ -63,14 +64,14 @@ func EncodeImage(filename string, src image.Image) error {
 }
 
 // ReadFiles recursively searches an entire directory for all the files in that directory
-func ReadFiles(path string) []string {
-	files, err := ioutil.ReadDir(path)
+func ReadFiles(imgDir string) []string {
+	files, err := ioutil.ReadDir(imgDir)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("ReadFiles Error: %v\n", err))
 	}
 	re := regexp.MustCompile("[.]")
 	for _, file := range files {
-		fullPath := fmt.Sprintf("%s/%s", path, file.Name())
+		fullPath := fmt.Sprintf("%s/%s", imgDir, file.Name())
 		if re.MatchString(file.Name()) {
 			imgNames = append(imgNames, fullPath)
 		} else {
@@ -109,7 +110,7 @@ func CopyImage(srcDir string, dstDir string, copyPath string) error {
 func DrawImage(
 	ws *screen.Window,
 	buffer *screen.Buffer,
-	path string,
+	imgDir string,
 	src image.Image) error {
 	source := (*buffer).RGBA()
 	// draw background
@@ -124,8 +125,8 @@ func DrawImage(
 }
 
 // DeleteFile deletes a single file path
-func DeleteFile(path string) error {
-	err := os.Remove(path)
+func DeleteFile(imgDir string) error {
+	err := os.Remove(imgDir)
 	if err != nil {
 		return err
 	}
@@ -201,9 +202,13 @@ func main() {
 	}
 	defer errFile.Close()
 
-	var path string
-	fmt.Println("Input path directory : ")
-	fmt.Scanln(&path)
+	var imgDir string
+	fmt.Println("Input imgDir directory : ")
+	fmt.Scanln(&imgDir)
+	err = os.RemoveAll(path.Join(imgDir, ".DS_Store"))
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
 
 	driver.Main(func(s screen.Screen) {
 		ws, err := s.NewWindow(nil)
@@ -218,14 +223,14 @@ func main() {
 		}
 		defer buffer.Release()
 
-		ReadFiles(path)
+		ReadFiles(imgDir)
 		curIndex := 0
-		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data", path))
-		curCopyImage, err := InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", path))
+		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data", imgDir))
+		curCopyImage, err := InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", imgDir))
 		if err != nil {
-			writeErr(errFile, err, "InitCopyData1", true)
+			writeErr(errFile, err, "InitCopyData1", false)
 		}
-		newTrashDir := fmt.Sprintf("%s/../trash_data/", path)
+		newTrashDir := fmt.Sprintf("%s/../trash_data/", imgDir)
 		if _, err := os.Stat(newTrashDir); os.IsNotExist(err) {
 			writeErr(errFile, err, "Stat", false)
 			os.MkdirAll(newTrashDir, 0755)
@@ -244,7 +249,7 @@ func main() {
 			switch e := ws.NextEvent().(type) {
 			case lifecycle.Event:
 				if e.To == lifecycle.StageDead {
-					copyPath = fmt.Sprintf("%s/copy_data/", path)
+					copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 					err = os.RemoveAll(copyPath)
 					if err != nil {
 						writeErr(errFile, err, "RemoveAll1", true)
@@ -257,7 +262,7 @@ func main() {
 					switch e.Code {
 					case key.CodeEscape:
 						buffer.Release()
-						copyPath = fmt.Sprintf("%s/copy_data/", path)
+						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						err := os.RemoveAll(copyPath)
 						if err != nil {
 							writeErr(errFile, err, "RemoveAll2", true)
@@ -279,15 +284,15 @@ func main() {
 						if err != nil {
 							writeErr(errFile, err, "Remove1", true)
 						}
-						copyPath = fmt.Sprintf("%s/copy_data/", path)
+						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						curCopyDir := GetCopyDir(imgNames[curIndex], copyPath)
 						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, copyPath)
 						if err != nil {
-							writeErr(errFile, err, "InitCopyData2", true)
+							writeErr(errFile, err, "InitCopyData2", false)
 						}
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						trashDataDir := GetCopyDir(imgNames[curIndex], newTrashDir)
-						copyPath = fmt.Sprintf("%s/copy_data/", path)
+						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						err = CopyImage(imgNames[curIndex], trashDataDir, copyPath)
 						if err != nil {
 							writeErr(errFile, err, "GetCopyDir1", true)
@@ -306,7 +311,7 @@ func main() {
 						curCopyDir := GetCopyDir(imgNames[curIndex], copyPath)
 						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, copyPath)
 						if err != nil {
-							writeErr(errFile, err, "InitCopyData3", true)
+							writeErr(errFile, err, "InitCopyData3", false)
 						}
 					case key.CodeDownArrow, key.CodeUpArrow:
 						if e.Code == key.CodeUpArrow {
@@ -367,7 +372,7 @@ func main() {
 						}
 					}
 				}
-				copyPath = fmt.Sprintf("%s/copy_data/", path)
+				copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 				curCopyDir = GetCopyDir(imgNames[curIndex], copyPath)
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err != nil {
