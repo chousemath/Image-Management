@@ -15,7 +15,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"time"
 
 	_ "image/gif"
 	_ "image/jpeg"
@@ -187,16 +186,6 @@ func InitCopyData(arr []string, index int, dir string, copyPath string) (image.I
 	return curCopyImage, nil
 }
 
-func writeErr(f *os.File, myErr error, tag string, fatal bool) {
-	if _, err := f.WriteString(fmt.Sprintf("[%s]<%d>: %s\n", tag, time.Now().Unix(), myErr.Error())); err != nil {
-		log.Fatal(fmt.Sprintf("Crashed while writing error to file: %v", err))
-	}
-	if fatal {
-		log.Fatal(fmt.Sprintf("[%s]<%d>: %s\n", tag, time.Now().Unix(), myErr.Error()))
-	}
-	fmt.Println(myErr.Error())
-}
-
 func main() {
 	config, err := os.Open("./config.json")
 	if err != nil {
@@ -239,14 +228,14 @@ func main() {
 		ws, err := s.NewWindow(nil)
 		if err != nil {
 			utils.CreateGithubIssue(ctx, conf, client, &[]string{"NewWindow"}, "Error creating a new window", err.Error())
-			writeErr(errFile, err, "NewWindow", true)
+			utils.WriteErr(errFile, err, "NewWindow", true)
 		}
 		defer ws.Release()
 
 		buffer, err := s.NewBuffer(image.Pt(maxWidth, maxHeight))
 		if err != nil {
 			utils.CreateGithubIssue(ctx, conf, client, &[]string{"NewBuffer"}, "Error creating a new buffer", err.Error())
-			writeErr(errFile, err, "NewBuffer", true)
+			utils.WriteErr(errFile, err, "NewBuffer", true)
 		}
 		defer buffer.Release()
 
@@ -255,17 +244,17 @@ func main() {
 		curCopyDir := GetCopyDir(imgNames[curIndex], fmt.Sprintf("%s/copy_data", imgDir))
 		curCopyImage, err := InitCopyData(imgNames, curIndex, curCopyDir, fmt.Sprintf("%s/copy_data", imgDir))
 		if err != nil {
-			writeErr(errFile, err, "InitCopyData1", false)
+			utils.WriteErr(errFile, err, "InitCopyData1", false)
 		}
 		newTrashDir := fmt.Sprintf("%s/../trash_data/", imgDir)
 		if _, err := os.Stat(newTrashDir); os.IsNotExist(err) {
-			writeErr(errFile, err, "Stat", false)
+			utils.WriteErr(errFile, err, "Stat", false)
 			os.MkdirAll(newTrashDir, 0755)
 		}
 		// Draw Copy Image on window
 		err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 		if err != nil {
-			writeErr(errFile, err, "DrawImage1", true)
+			utils.WriteErr(errFile, err, "DrawImage1", true)
 		}
 
 		brightClicks := 0
@@ -279,7 +268,7 @@ func main() {
 					copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 					err = os.RemoveAll(copyPath)
 					if err != nil {
-						writeErr(errFile, err, "RemoveAll1", true)
+						utils.WriteErr(errFile, err, "RemoveAll1", true)
 					}
 					return
 				}
@@ -292,14 +281,14 @@ func main() {
 						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						err := os.RemoveAll(copyPath)
 						if err != nil {
-							writeErr(errFile, err, "RemoveAll2", true)
+							utils.WriteErr(errFile, err, "RemoveAll2", true)
 						}
 						return
 					case key.CodeRightArrow, key.CodeLeftArrow:
 						// change original image
 						err = EncodeImage(imgNames[curIndex], curCopyImage)
 						if err != nil {
-							writeErr(errFile, err, "EncodeImage1", true)
+							utils.WriteErr(errFile, err, "EncodeImage1", true)
 						}
 						if e.Code == key.CodeRightArrow {
 							curIndex++
@@ -309,36 +298,36 @@ func main() {
 						curIndex = CheckOutOfIndex(len(imgNames), curIndex)
 						err = os.Remove(curCopyDir)
 						if err != nil {
-							writeErr(errFile, err, "Remove1", true)
+							utils.WriteErr(errFile, err, "Remove1", true)
 						}
 						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						curCopyDir := GetCopyDir(imgNames[curIndex], copyPath)
 						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, copyPath)
 						if err != nil {
-							writeErr(errFile, err, "InitCopyData2", false)
+							utils.WriteErr(errFile, err, "InitCopyData2", false)
 						}
 					case key.CodeDeleteForward, key.CodeDeleteBackspace:
 						trashDataDir := GetCopyDir(imgNames[curIndex], newTrashDir)
 						copyPath = fmt.Sprintf("%s/copy_data/", imgDir)
 						err = CopyImage(imgNames[curIndex], trashDataDir, copyPath)
 						if err != nil {
-							writeErr(errFile, err, "GetCopyDir1", true)
+							utils.WriteErr(errFile, err, "GetCopyDir1", true)
 						}
 						// Delete copy data
 						err := DeleteFile(curCopyDir)
 						if err != nil {
-							writeErr(errFile, err, "DeleteFile1", true)
+							utils.WriteErr(errFile, err, "DeleteFile1", true)
 						}
 						// Delete original data
 						err = DeleteFile(imgNames[curIndex])
 						if err != nil {
-							writeErr(errFile, err, "DeleteFile2", true)
+							utils.WriteErr(errFile, err, "DeleteFile2", true)
 						}
 						imgNames = DeleteArrayElement(imgNames, curIndex)
 						curCopyDir := GetCopyDir(imgNames[curIndex], copyPath)
 						curCopyImage, err = InitCopyData(imgNames, curIndex, curCopyDir, copyPath)
 						if err != nil {
-							writeErr(errFile, err, "InitCopyData3", false)
+							utils.WriteErr(errFile, err, "InitCopyData3", false)
 						}
 					case key.CodeDownArrow, key.CodeUpArrow:
 						if e.Code == key.CodeUpArrow {
@@ -353,12 +342,12 @@ func main() {
 						} else {
 							curCopyImage, err = DecodeImage(imgNames[curIndex])
 							if err != nil {
-								writeErr(errFile, err, "DecodeImage1", true)
+								utils.WriteErr(errFile, err, "DecodeImage1", true)
 							}
 						}
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
-							writeErr(errFile, err, "EncodeImage2", true)
+							utils.WriteErr(errFile, err, "EncodeImage2", true)
 						}
 					case key.CodeZ, key.CodeX:
 						if e.Code == key.CodeZ {
@@ -373,12 +362,12 @@ func main() {
 						} else {
 							curCopyImage, err = DecodeImage(imgNames[curIndex])
 							if err != nil {
-								writeErr(errFile, err, "DecodeImage2", true)
+								utils.WriteErr(errFile, err, "DecodeImage2", true)
 							}
 						}
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
-							writeErr(errFile, err, "EncodeImage3", true)
+							utils.WriteErr(errFile, err, "EncodeImage3", true)
 						}
 					case key.CodeA, key.CodeW, key.CodeD, key.CodeS:
 						width := curCopyImage.Bounds().Max.X
@@ -395,7 +384,7 @@ func main() {
 
 						err := EncodeImage(curCopyDir, curCopyImage)
 						if err != nil {
-							writeErr(errFile, err, "EncodeImage4", true)
+							utils.WriteErr(errFile, err, "EncodeImage4", true)
 						}
 					}
 				}
@@ -403,7 +392,7 @@ func main() {
 				curCopyDir = GetCopyDir(imgNames[curIndex], copyPath)
 				err = DrawImage(&ws, &buffer, curCopyDir, curCopyImage)
 				if err != nil {
-					writeErr(errFile, err, "EncodeImage5", true)
+					utils.WriteErr(errFile, err, "EncodeImage5", true)
 				}
 				brightClicks = 0
 				contrastClicks = 0
