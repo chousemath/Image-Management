@@ -1,0 +1,5 @@
+#!/bin/bash
+
+git add .
+git commit -am "Quick Save"
+git push

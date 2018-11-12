@@ -2,6 +2,8 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -24,7 +26,10 @@ import (
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
 
+	"github.com/chousemath/Image-Management/utils"
 	"github.com/disintegration/imaging"
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -193,6 +198,26 @@ func writeErr(f *os.File, myErr error, tag string, fatal bool) {
 }
 
 func main() {
+	config, err := os.Open("./config.json")
+	if err != nil {
+		log.Fatal("Unable to open the config.json file")
+	}
+	defer config.Close()
+
+	configBytes, err := ioutil.ReadAll(config)
+	if err != nil {
+		log.Fatal("Unable to convert config file into bytes")
+	}
+
+	conf := new(utils.Configuration)
+	json.Unmarshal(configBytes, conf)
+
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: conf.GithubPersonalAccessToken,
+	})
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
 
 	// Open (and create if necessary) a simple text file to hold all errors
 	// os.OpenFile(name, os.O_RDONLY|os.O_CREATE, 0666)
@@ -213,12 +238,14 @@ func main() {
 	driver.Main(func(s screen.Screen) {
 		ws, err := s.NewWindow(nil)
 		if err != nil {
+			utils.CreateGithubIssue(ctx, conf, client, &[]string{"NewWindow"}, "Error creating a new window", err.Error())
 			writeErr(errFile, err, "NewWindow", true)
 		}
 		defer ws.Release()
 
 		buffer, err := s.NewBuffer(image.Pt(maxWidth, maxHeight))
 		if err != nil {
+			utils.CreateGithubIssue(ctx, conf, client, &[]string{"NewBuffer"}, "Error creating a new buffer", err.Error())
 			writeErr(errFile, err, "NewBuffer", true)
 		}
 		defer buffer.Release()
